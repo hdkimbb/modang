@@ -9,6 +9,7 @@ import { OwnerTabNav } from "@/components/owner/OwnerTabNav";
 import { ToolsTab } from "@/components/owner/ToolsTab";
 import { usePersona } from "@/context/PersonaContext";
 import { filterOwnerMeetings, type OwnerMeetingFilter } from "@/lib/owner-meeting-filter";
+import { API_BASE } from "@/lib/api";
 import type {
   OwnerDashboard,
   OwnerInsights,
@@ -16,8 +17,6 @@ import type {
   OwnerTabId,
   OwnerTimeslotInsights,
 } from "@/lib/types/owner";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 async function parseApiError(res: Response, fallback: string): Promise<string> {
   const err = await res.json().catch(() => ({}));

@@ -17,6 +17,9 @@ class Place(ModelBase):
             sqlite_where=text(
                 "external_provider IS NOT NULL AND external_id IS NOT NULL",
             ),
+            postgresql_where=text(
+                "external_provider IS NOT NULL AND external_id IS NOT NULL",
+            ),
         ),
     )
 

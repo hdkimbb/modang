@@ -10,6 +10,8 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
+from app.migration_indexes import create_uq_places_external, drop_uq_places_external
+
 
 # revision identifiers, used by Alembic.
 revision: str = '9e0415db744a'
@@ -37,7 +39,7 @@ def upgrade() -> None:
     )
     op.create_index('idx_places_business', 'places', ['business_id'], unique=False)
     op.create_index('idx_places_district_category', 'places', ['district', 'category'], unique=False)
-    op.create_index('uq_places_external', 'places', ['external_provider', 'external_id'], unique=True, sqlite_where=sa.text('external_provider IS NOT NULL AND external_id IS NOT NULL'))
+    create_uq_places_external()
     op.create_table('users',
     sa.Column('name', sa.String(length=50), nullable=False),
     sa.Column('region', sa.String(length=50), nullable=False),
@@ -79,7 +81,7 @@ def downgrade() -> None:
     op.drop_table('place_signals')
     op.drop_index('idx_users_region', table_name='users')
     op.drop_table('users')
-    op.drop_index('uq_places_external', table_name='places', sqlite_where=sa.text('external_provider IS NOT NULL AND external_id IS NOT NULL'))
+    drop_uq_places_external()
     op.drop_index('idx_places_district_category', table_name='places')
     op.drop_index('idx_places_business', table_name='places')
     op.drop_table('places')
