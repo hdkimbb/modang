@@ -12,8 +12,13 @@ from app.models.meeting import Meeting
 from app.models.meeting_event import MeetingEvent
 from app.models.place import Place
 from app.models.place_signal import PlaceSignal
+from app.schemas.meeting import MeetingEventsListResponse
 from app.schemas.meeting_event import EventCreateRequest, EventResponse
 from app.services.id import generate_id
+from app.services.meeting_events import (
+    event_rows_to_summaries,
+    fetch_meeting_event_rows,
+)
 
 router = APIRouter(prefix="/api/v1/meetings", tags=["meeting-events"])
 
@@ -23,6 +28,22 @@ def _error(status_code: int, code: str, message: str) -> HTTPException:
         status_code=status_code,
         detail={"error": {"code": code, "message": message, "details": {}}},
     )
+
+
+@router.get("/{meeting_id}/events", response_model=MeetingEventsListResponse)
+def list_meeting_events(
+    meeting_id: str,
+    db: Session = Depends(get_db),
+) -> MeetingEventsListResponse:
+    meeting = db.get(Meeting, meeting_id)
+    if meeting is None:
+        raise _error(
+            status.HTTP_404_NOT_FOUND,
+            "meeting_not_found",
+            "모임을 찾을 수 없어요.",
+        )
+    rows = fetch_meeting_event_rows(db, meeting_id)
+    return MeetingEventsListResponse(items=event_rows_to_summaries(db, rows))
 
 
 @router.post(

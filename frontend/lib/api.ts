@@ -1,4 +1,11 @@
 import type { MeetingApi } from "@/lib/meetings-map";
+import type {
+  MeetingDetailApi,
+  MeetingEventsListApi,
+  MeetingPlaceHistoryApi,
+} from "@/lib/types/meeting-detail";
+import type { Persona, PersonaListApi } from "@/lib/types/persona";
+import type { RankingResponseApi } from "@/lib/types/ranking";
 import {
   mapPlaceSearchItem,
   type Place,
@@ -102,11 +109,35 @@ export type CreateMeetingRequest = {
   neighborhood: string;
   activity_range: number;
   description?: string;
+  host_user_id?: string;
 };
+
+export async function getPersonas(): Promise<Persona[]> {
+  const data = await fetchApi<PersonaListApi>("/api/v1/users/personas");
+  return data.items;
+}
 
 export async function getMeetings(): Promise<MeetingApi[]> {
   const data = await fetchApi<{ items: MeetingApi[] }>("/api/v1/meetings");
   return data.items;
+}
+
+export async function getMeetingDetail(
+  meetingId: string,
+): Promise<MeetingDetailApi> {
+  return fetchApi(`/api/v1/meetings/${meetingId}`);
+}
+
+export async function getMeetingEvents(
+  meetingId: string,
+): Promise<MeetingEventsListApi> {
+  return fetchApi(`/api/v1/meetings/${meetingId}/events`);
+}
+
+export async function getMeetingPlaceHistory(
+  meetingId: string,
+): Promise<MeetingPlaceHistoryApi> {
+  return fetchApi(`/api/v1/meetings/${meetingId}/place_history`);
 }
 
 export async function getPlaceDetail(placeId: string): Promise<PlaceDetailApi> {
@@ -158,6 +189,19 @@ export async function createEventRating(
     );
   }
   return res.json() as Promise<RatingResponse>;
+}
+
+export async function getRanking(
+  district: string,
+  category: string,
+  limit = 10,
+): Promise<RankingResponseApi> {
+  const params = new URLSearchParams({
+    district,
+    category,
+    limit: String(limit),
+  });
+  return fetchApi(`/api/v1/ranking?${params.toString()}`);
 }
 
 export async function createMeeting(

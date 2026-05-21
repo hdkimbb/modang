@@ -1,11 +1,10 @@
 "use client";
 
 import { Star, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import { usePersona } from "@/context/PersonaContext";
 import { createEventRating } from "@/lib/api";
-
-const DEFAULT_USER_ID = "u_001";
 
 type RatingModalProps = {
   open: boolean;
@@ -24,9 +23,17 @@ export function RatingModal({
   meetingLabel,
   onSuccess,
 }: RatingModalProps) {
+  const { userId } = usePersona();
   const [rating, setRating] = useState(0);
   const [wouldRevisit, setWouldRevisit] = useState<boolean | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setRating(0);
+    setWouldRevisit(null);
+    setSubmitting(false);
+  }, [open, eventId]);
 
   if (!open) return null;
 
@@ -35,7 +42,7 @@ export function RatingModal({
     setSubmitting(true);
     try {
       await createEventRating(eventId, {
-        user_id: DEFAULT_USER_ID,
+        user_id: userId,
         rating,
         would_revisit: wouldRevisit,
       });

@@ -12,6 +12,10 @@ declare namespace kakao.maps {
   interface MapOptions {
     center: LatLng;
     level: number;
+    draggable?: boolean;
+    scrollwheel?: boolean;
+    disableDoubleClick?: boolean;
+    disableDoubleClickZoom?: boolean;
   }
 
   class Map {

@@ -1,7 +1,7 @@
 "use client";
 
 import { ActionButton } from "@seed-design/react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
@@ -42,6 +42,8 @@ function PlaceResultList({
 
 export function PlaceSearchScreen() {
   const router = useRouter();
+  const params = useParams();
+  const meetingId = typeof params.id === "string" ? params.id : null;
   const { setPlace, meetingCategory } = useEventDraft();
 
   const [query, setQuery] = useState("");
@@ -237,6 +239,7 @@ export function PlaceSearchScreen() {
           open={Boolean(detailPlace)}
           onClose={() => setDetailPlace(null)}
           onSelect={handleSelectFromSheet}
+          meetingId={meetingId}
         />
       ) : null}
     </div>

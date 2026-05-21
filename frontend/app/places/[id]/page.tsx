@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, MessageCircle, Share2, Star } from "lucide-react";
+import { ArrowLeft, Share2, Star } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 
@@ -12,8 +12,6 @@ import {
 } from "@/lib/api";
 import { formatRelativeDays } from "@/lib/format-relative";
 import type { PlaceDetailApi, PlaceMeetingHistoryApi, PlaceRatingsApi } from "@/lib/types/place";
-
-const DEFAULT_USER_ID = "u_001";
 
 function formatVisitDate(iso: string): string {
   const d = new Date(iso);
@@ -155,15 +153,9 @@ function PlaceDetailBody({
       </section>
 
       {place.owner_message ? (
-        <section className="mx-4 mb-4 rounded-2xl border border-amber-100 bg-amber-50 p-4">
-          <div className="mb-2 flex items-center gap-1 text-sm font-medium text-amber-800">
-            <MessageCircle size={16} strokeWidth={1.75} aria-hidden />
-            사장님 한마디
-          </div>
-          <p className="whitespace-pre-wrap text-sm text-amber-900">
-            {place.owner_message}
-          </p>
-        </section>
+        <p className="mx-4 mb-4 whitespace-pre-wrap rounded-2xl bg-amber-50 p-4 text-sm text-gray-800">
+          {place.owner_message}
+        </p>
       ) : null}
 
       <section className="mx-4 mb-4 rounded-2xl border border-gray-200 bg-white p-4">
@@ -264,7 +256,9 @@ function PlaceDetailBody({
           <button
             type="button"
             onClick={() =>
-              router.push(`/meetings/${meetingId}/events/new/place`)
+              router.push(
+                `/meetings/${meetingId}/events/new?place_id=${encodeURIComponent(placeId)}`,
+              )
             }
             className="w-full rounded-full bg-orange-500 py-3 text-sm font-medium text-white"
           >

@@ -4,6 +4,7 @@ import { ChevronDown, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { usePersona } from "@/context/PersonaContext";
 import { createMeeting } from "@/lib/api";
 import {
   DEFAULT_NEIGHBORHOOD,
@@ -41,6 +42,7 @@ function Chip({
 
 export function CreateMeetingForm() {
   const router = useRouter();
+  const { userId, isOwner, persona } = usePersona();
   const [name, setName] = useState("");
   const [category, setCategory] = useState<string | null>(null);
   const [showMoreCategories, setShowMoreCategories] = useState(false);
@@ -49,9 +51,14 @@ export function CreateMeetingForm() {
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const canSubmit = name.trim().length > 0 && category !== null;
+  const canSubmit =
+    !isOwner && name.trim().length > 0 && category !== null;
 
   const handleSubmit = async () => {
+    if (isOwner) {
+      alert("모임 만들기는 일반 멤버 계정에서만 할 수 있어요.");
+      return;
+    }
     if (!canSubmit || !category) return;
     setSubmitting(true);
     try {
@@ -61,6 +68,7 @@ export function CreateMeetingForm() {
         neighborhood,
         activity_range: activityRange,
         description: description.trim(),
+        host_user_id: userId,
       });
       alert("모임이 만들어졌어요!");
       router.push("/meetings");
@@ -74,6 +82,12 @@ export function CreateMeetingForm() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-white pb-24">
+      {isOwner ? (
+        <p className="mx-4 mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          {persona.name}님은 사장 계정이에요. 모임을 만들려면 상단에서 일반 멤버로
+          전환해 주세요.
+        </p>
+      ) : null}
       <div className="shrink-0 px-4 pt-3">
         <button
           type="button"

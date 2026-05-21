@@ -21,6 +21,12 @@ class MeetingCreateRequest(BaseModel):
     neighborhood: str = Field(..., min_length=1, max_length=50)
     activity_range: int = Field(..., ge=1, le=5)
     description: str = Field(default="", max_length=500)
+    host_user_id: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=32,
+        description="Dev: acting user when creating a meeting",
+    )
 
 
 class MeetingResponse(BaseModel):
@@ -38,3 +44,58 @@ class MeetingResponse(BaseModel):
 
 class MeetingListResponse(BaseModel):
     items: list[MeetingResponse]
+
+
+class MeetingMemberItem(BaseModel):
+    user_id: str
+    name: str
+    role: str
+
+
+class MeetingEventPlaceSummary(BaseModel):
+    place_id: str
+    name: str
+
+
+class MeetingEventSummary(BaseModel):
+    event_id: str
+    title: str
+    scheduled_at: datetime
+    status: str
+    attendee_count: int
+    place: MeetingEventPlaceSummary
+    avg_rating: float | None = None
+    rating_count: int = 0
+
+
+class MeetingDetailResponse(BaseModel):
+    id: str
+    name: str
+    category: str
+    neighborhood: str
+    activity_range: int
+    description: str | None
+    member_count: int
+    created_at: datetime
+    members: list[MeetingMemberItem]
+    upcoming_events: list[MeetingEventSummary]
+
+
+class MeetingEventsListResponse(BaseModel):
+    items: list[MeetingEventSummary]
+
+
+class PlaceHistoryPlaceSummary(BaseModel):
+    place_id: str
+    name: str
+
+
+class PlaceHistoryItem(BaseModel):
+    place: PlaceHistoryPlaceSummary
+    visit_count: int
+    last_visited_at: datetime
+    avg_rating_from_us: float | None = None
+
+
+class MeetingPlaceHistoryResponse(BaseModel):
+    items: list[PlaceHistoryItem]

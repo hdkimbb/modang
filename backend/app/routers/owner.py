@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import delete, func, or_, select
@@ -45,6 +45,8 @@ from app.services.owner_timeslots import (
 
 router = APIRouter(prefix="/api/v1/owner", tags=["owner"])
 
+KST = timezone(timedelta(hours=9))
+
 
 def _error(status_code: int, code: str, message: str) -> HTTPException:
     return HTTPException(
@@ -85,12 +87,22 @@ def _require_owner(db: Session, user_id: str) -> tuple[User, Place]:
 
 
 def _month_bounds(now: datetime) -> tuple[datetime, datetime]:
-    start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    if now.month == 12:
-        end = start.replace(year=now.year + 1, month=1)
+    """Current calendar month in KST, returned as UTC-aware bounds."""
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    local = now.astimezone(KST)
+    start_local = local.replace(
+        day=1,
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0,
+    )
+    if start_local.month == 12:
+        end_local = start_local.replace(year=start_local.year + 1, month=1)
     else:
-        end = start.replace(month=now.month + 1)
-    return start, end
+        end_local = start_local.replace(month=start_local.month + 1)
+    return start_local.astimezone(timezone.utc), end_local.astimezone(timezone.utc)
 
 
 def _count_signals_for_meeting(

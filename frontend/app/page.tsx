@@ -26,6 +26,17 @@ export default function Home() {
         모임 탭 보기 →
       </Link>
       <Link
+        href="/ranking"
+        style={{
+          fontSize: "var(--seed-font-size-t5)",
+          fontWeight: "var(--seed-font-weight-medium)",
+          color: "var(--carrot-primary)",
+          textDecoration: "underline",
+        }}
+      >
+        우리동네 랭킹 →
+      </Link>
+      <Link
         href="/meetings/1/events/new"
         style={{
           fontSize: "var(--seed-font-size-t4)",
@@ -35,6 +46,25 @@ export default function Home() {
       >
         일정 만들기 (개발)
       </Link>
+      <Link
+        href="/owner"
+        style={{
+          fontSize: "var(--seed-font-size-t4)",
+          color: "var(--seed-color-fg-neutral-subtle)",
+          textDecoration: "underline",
+        }}
+      >
+        사장 대시보드 →
+      </Link>
+      <p
+        style={{
+          fontSize: "var(--seed-font-size-t3)",
+          color: "var(--seed-color-fg-neutral-subtle)",
+          textAlign: "center",
+        }}
+      >
+        상단 바에서 페르소나(민지·준호·김사장 등)를 전환할 수 있어요
+      </p>
     </main>
   );
 }

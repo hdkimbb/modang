@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 
+import { AppProviders } from "@/components/providers/AppProviders";
 import { SeedStyles } from "@/components/providers/SeedStyles";
 import "./globals.css";
 
@@ -57,7 +58,9 @@ export default function RootLayout({
         {kakaoMapsSrc ? (
           <Script src={kakaoMapsSrc} strategy="afterInteractive" />
         ) : null}
-        <SeedStyles>{children}</SeedStyles>
+        <SeedStyles>
+          <AppProviders>{children}</AppProviders>
+        </SeedStyles>
       </body>
     </html>
   );

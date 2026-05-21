@@ -80,6 +80,23 @@ export interface Place {
   isOwnerRecommended?: boolean;
 }
 
+export function mapPlaceDetailToPlace(detail: PlaceDetailApi): Place {
+  return {
+    id: detail.id,
+    placeId: detail.id,
+    name: detail.name,
+    address: detail.address,
+    lat: detail.lat,
+    lng: detail.lng,
+    distance: null,
+    meetingCount: detail.meeting_count,
+    avgRating: detail.avg_rating,
+    ratingCount: detail.rating_count,
+    wouldRevisitRate: detail.would_revisit_rate,
+    ownerMessage: detail.owner_message,
+  };
+}
+
 export function mapPlaceSearchItem(item: PlaceSearchItemApi): Place {
   const id =
     item.place_id ??

@@ -2,7 +2,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import meeting_events, meetings, owner, places, ratings
+from app.routers import (
+    meeting_events,
+    meetings,
+    owner,
+    places,
+    ranking,
+    ratings,
+    users,
+)
 
 settings = get_settings()
 
@@ -27,6 +35,8 @@ app.include_router(meetings.router)
 app.include_router(meeting_events.router)
 app.include_router(owner.router)
 app.include_router(ratings.router)
+app.include_router(ranking.router)
+app.include_router(users.router)
 
 
 @app.get("/")

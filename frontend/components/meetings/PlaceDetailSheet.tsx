@@ -1,6 +1,7 @@
 "use client";
 
-import { Star } from "lucide-react";
+import { ChevronRight, Star } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import { PlaceMiniMap } from "@/components/maps/PlaceMiniMap";
@@ -11,6 +12,7 @@ interface PlaceDetailSheetProps {
   open: boolean;
   onClose: () => void;
   onSelect: () => void;
+  meetingId?: string | null;
 }
 
 export function PlaceDetailSheet({
@@ -18,7 +20,9 @@ export function PlaceDetailSheet({
   open,
   onClose,
   onSelect,
+  meetingId,
 }: PlaceDetailSheetProps) {
+  const router = useRouter();
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -30,7 +34,14 @@ export function PlaceDetailSheet({
 
   if (!open) return null;
 
+  const detailPlaceId = place.placeId ?? (/^plc_/.test(place.id) ? place.id : null);
   const hasCoords = Number.isFinite(place.lat) && Number.isFinite(place.lng);
+
+  const handleViewDetail = () => {
+    if (!detailPlaceId) return;
+    const qs = meetingId ? `?meeting_id=${encodeURIComponent(meetingId)}` : "";
+    router.push(`/places/${detailPlaceId}${qs}`);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
@@ -90,6 +101,19 @@ export function PlaceDetailSheet({
           <p className="mx-4 mt-4 whitespace-pre-line rounded-xl bg-amber-50 p-4 text-sm text-gray-800">
             {place.ownerMessage}
           </p>
+        ) : null}
+
+        {detailPlaceId ? (
+          <div className="px-4 pt-2">
+            <button
+              type="button"
+              onClick={handleViewDetail}
+              className="flex w-full items-center justify-center gap-1 py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              자세히 보기
+              <ChevronRight className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+            </button>
+          </div>
         ) : null}
 
         <div className="sticky bottom-0 mt-4 bg-white px-4 pb-4 pt-2">

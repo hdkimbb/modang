@@ -1,12 +1,13 @@
 "use client";
 
 import { Divider, ListRoot } from "@seed-design/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { useEventDraft } from "@/context/EventDraftContext";
-import { createMeetingEvent, getMeetings } from "@/lib/api";
+import { createMeetingEvent, getMeetings, getPlaceDetail } from "@/lib/api";
+import { mapPlaceDetailToPlace } from "@/lib/types/place";
 import {
   CONDITION_OPTIONS,
   FORMAT_OPTIONS,
@@ -29,17 +30,27 @@ export function EventFormScreen({
   apiMeetingId,
 }: EventFormScreenProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const draft = useEventDraft();
+  const { setPlace, setMeetingCategory } = draft;
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const placeId = searchParams.get("place_id");
+    if (!placeId) return;
+    getPlaceDetail(placeId)
+      .then((detail) => setPlace(mapPlaceDetailToPlace(detail)))
+      .catch(() => undefined);
+  }, [searchParams, setPlace]);
 
   useEffect(() => {
     getMeetings()
       .then((meetings) => {
         const meeting = meetings.find((m) => m.id === apiMeetingId);
-        draft.setMeetingCategory(meeting?.category ?? null);
+        setMeetingCategory(meeting?.category ?? null);
       })
-      .catch(() => draft.setMeetingCategory(null));
-  }, [apiMeetingId, draft.setMeetingCategory]);
+      .catch(() => setMeetingCategory(null));
+  }, [apiMeetingId, setMeetingCategory]);
 
   const handleNext = async () => {
     const title = draft.title.trim();
