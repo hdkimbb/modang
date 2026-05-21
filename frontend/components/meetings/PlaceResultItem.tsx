@@ -26,9 +26,29 @@ export function PlaceResultItem({
     place.avgRating != null ? ` · ⭐${place.avgRating.toFixed(1)}` : "";
 
   return (
-    <ListItem onClick={onSelect} data-checked={selected ? "" : undefined}>
+    <ListItem
+      onClick={onSelect}
+      aria-selected={selected}
+      style={{
+        background: selected
+          ? "rgba(255, 111, 15, 0.08)"
+          : "var(--seed-color-bg-layer-default)",
+        borderLeft: selected
+          ? "3px solid var(--carrot-primary, #ff6f0f)"
+          : "3px solid transparent",
+        transition: "background 0.15s ease, border-color 0.15s ease",
+      }}
+    >
       <ListContent>
-        <ListTitle>{place.name}</ListTitle>
+        <ListTitle
+          style={
+            selected
+              ? { color: "var(--carrot-primary, #ff6f0f)" }
+              : undefined
+          }
+        >
+          {place.name}
+        </ListTitle>
         <ListDetail>
           <span
             style={{

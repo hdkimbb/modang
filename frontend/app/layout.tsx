@@ -9,11 +9,18 @@ export const metadata: Metadata = {
   description: "모여라 당근으로 — 동네 모임 기반 가게 어워드",
 };
 
+const kakaoJsKey = process.env.NEXT_PUBLIC_KAKAO_JS_KEY?.trim();
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const kakaoMapsSrc =
+    kakaoJsKey && kakaoJsKey !== "내가_나중에_입력"
+      ? `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${kakaoJsKey}&autoload=false`
+      : null;
+
   return (
     <html
       lang="ko"
@@ -47,6 +54,9 @@ export default function RootLayout({
             } catch (e) {}
           `}
         </Script>
+        {kakaoMapsSrc ? (
+          <Script src={kakaoMapsSrc} strategy="afterInteractive" />
+        ) : null}
         <SeedStyles>{children}</SeedStyles>
       </body>
     </html>

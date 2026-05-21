@@ -28,6 +28,8 @@ export interface Place {
   placeId: string | null;
   name: string;
   address: string;
+  lat: number;
+  lng: number;
   distance: string | null;
   meetingCount: number;
   avgRating: number | null;
@@ -45,6 +47,8 @@ export function mapPlaceSearchItem(item: PlaceSearchItemApi): Place {
     placeId: item.place_id,
     name: item.name,
     address: item.address,
+    lat: item.lat,
+    lng: item.lng,
     distance: item.distance,
     meetingCount: item.meeting_count ?? 0,
     avgRating: item.avg_rating,

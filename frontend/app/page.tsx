@@ -12,10 +12,10 @@ export default function Home() {
           fontWeight: "var(--seed-font-weight-bold)",
         }}
       >
-        🥕 모당
+        모당
       </p>
       <Link
-        href="/meetings/1/events/new"
+        href="/meetings"
         style={{
           fontSize: "var(--seed-font-size-t5)",
           fontWeight: "var(--seed-font-weight-medium)",
@@ -23,7 +23,17 @@ export default function Home() {
           textDecoration: "underline",
         }}
       >
-        일정 만들기 화면으로 이동 →
+        모임 탭 보기 →
+      </Link>
+      <Link
+        href="/meetings/1/events/new"
+        style={{
+          fontSize: "var(--seed-font-size-t4)",
+          color: "var(--seed-color-fg-neutral-subtle)",
+          textDecoration: "underline",
+        }}
+      >
+        일정 만들기 (개발)
       </Link>
     </main>
   );
