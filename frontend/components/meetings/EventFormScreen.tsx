@@ -2,14 +2,16 @@
 
 import { Divider, ListRoot } from "@seed-design/react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { useEventDraft } from "@/context/EventDraftContext";
+import { createMeetingEvent } from "@/lib/api";
 import {
   CONDITION_OPTIONS,
   FORMAT_OPTIONS,
 } from "@/lib/constants/event-form";
-import { formatEventDateTime } from "@/lib/format";
+import { draftDateTimeToIso, formatEventDateTime } from "@/lib/format";
 
 import { BottomFixedButton } from "./BottomFixedButton";
 import { CapacitySection } from "./CapacitySection";
@@ -19,11 +21,46 @@ import { FormListRow } from "./FormListRow";
 
 interface EventFormScreenProps {
   meetingId: string;
+  apiMeetingId: string;
 }
 
-export function EventFormScreen({ meetingId }: EventFormScreenProps) {
+export function EventFormScreen({
+  meetingId,
+  apiMeetingId,
+}: EventFormScreenProps) {
   const router = useRouter();
   const draft = useEventDraft();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleNext = async () => {
+    const title = draft.title.trim();
+    if (!title) {
+      alert("모임 제목을 입력해 주세요.");
+      return;
+    }
+    if (!draft.place?.placeId) {
+      alert("등록된 장소를 선택해 주세요. (검색 결과에서 DB에 있는 장소를 골라주세요)");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await createMeetingEvent(apiMeetingId, {
+        title,
+        scheduled_at: draftDateTimeToIso(draft.date, draft.time),
+        attendee_count: draft.capacity,
+        place_id: draft.place.placeId,
+      });
+      console.log("event_id:", result.event_id, "signal_id:", result.signal_id);
+      alert("일정이 등록됐어요! 🎉");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "일정 등록에 실패했어요";
+      alert(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const placeLabel = draft.place?.name ?? "미정";
   const conditionsSummary =
@@ -112,8 +149,9 @@ export function EventFormScreen({ meetingId }: EventFormScreenProps) {
         </ListRoot>
       </div>
       <BottomFixedButton
-        label="다음"
-        onClick={() => alert("다음 단계는 준비 중")}
+        label={isSubmitting ? "등록 중..." : "다음"}
+        onClick={() => void handleNext()}
+        disabled={isSubmitting}
       />
     </div>
   );

@@ -44,7 +44,7 @@ export function PlaceSearchBar({ value, onChange }: PlaceSearchBarProps) {
           <SearchIcon />
         </span>
         <TextFieldInput
-          placeholder="장소명으로 검색"
+          placeholder="예) 당근카페 역삼점"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           aria-label="장소 검색"

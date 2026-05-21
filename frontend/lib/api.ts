@@ -1,3 +1,9 @@
+import {
+  mapPlaceSearchItem,
+  type Place,
+  type PlaceSearchResponse,
+} from "@/lib/types/place";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export async function fetchApi<T>(
@@ -21,8 +27,55 @@ export async function getHealth(): Promise<{ message: string }> {
   return fetchApi("/");
 }
 
-/** Place search — backend 연동 예정 */
-export async function searchPlaces(query: string) {
-  void query;
-  return [];
+export async function searchPlaces(query: string): Promise<Place[]> {
+  const params = new URLSearchParams({ q: query.trim() });
+  const data = await fetchApi<PlaceSearchResponse>(
+    `/api/v1/places/search?${params.toString()}`,
+  );
+  return data.items.map(mapPlaceSearchItem);
+}
+
+export async function getRecommendedPlaces(limit = 2): Promise<Place[]> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  const data = await fetchApi<PlaceSearchResponse>(
+    `/api/v1/places/recommendations?${params.toString()}`,
+  );
+  return data.items.map(mapPlaceSearchItem);
+}
+
+export type CreateEventRequest = {
+  title: string;
+  scheduled_at: string;
+  attendee_count: number;
+  place_id: string;
+};
+
+export type CreateEventResponse = {
+  event_id: string;
+  meeting_id: string;
+  place_id: string;
+  title: string;
+  scheduled_at: string;
+  attendee_count: number;
+  status: string;
+  created_at: string;
+  signal_id: string;
+};
+
+export async function createMeetingEvent(
+  meetingId: string,
+  data: CreateEventRequest,
+): Promise<CreateEventResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/meetings/${meetingId}/events`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(
+      err.detail?.error?.message || "일정 등록에 실패했어요",
+    );
+  }
+  return res.json() as Promise<CreateEventResponse>;
 }

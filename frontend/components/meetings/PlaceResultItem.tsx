@@ -21,6 +21,9 @@ export function PlaceResultItem({
   onSelect,
 }: PlaceResultItemProps) {
   const hasMeetings = place.meetingCount > 0;
+  const subline = [place.address, place.distance].filter(Boolean).join(" · ");
+  const ratingText =
+    place.avgRating != null ? ` · ⭐${place.avgRating.toFixed(1)}` : "";
 
   return (
     <ListItem onClick={onSelect} data-checked={selected ? "" : undefined}>
@@ -33,7 +36,7 @@ export function PlaceResultItem({
               color: "var(--seed-color-fg-neutral-subtle)",
             }}
           >
-            {place.address} · {place.distance}
+            {subline}
           </span>
           {hasMeetings ? (
             <span
@@ -45,8 +48,7 @@ export function PlaceResultItem({
                 fontWeight: "var(--seed-font-weight-medium)",
               }}
             >
-              이 가게에서 모임 {place.meetingCount}건 다녀감 · ⭐
-              {place.avgRating?.toFixed(1)}
+              이 가게에서 모임 {place.meetingCount}건 다녀감{ratingText}
             </span>
           ) : null}
         </ListDetail>

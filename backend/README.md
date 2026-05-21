@@ -38,20 +38,28 @@ pytest
 
 ## Database migrations (Alembic)
 
-After SQLAlchemy models are added under `app/models/`:
+From `backend/` with venv activated:
 
-1. Import models in `alembic/env.py` so metadata is registered.
-2. Create a revision:
+```powershell
+alembic upgrade head
+```
 
-   ```powershell
-   alembic revision --autogenerate -m "describe change"
-   ```
+Initial migration creates `users`, `places`, `place_signals` in `modang.db`.
 
-3. Apply migrations:
+## Seed data
 
-   ```powershell
-   alembic upgrade head
-   ```
+```powershell
+python -m app.seed
+```
+
+Re-runs delete existing rows and re-insert (dev convenience).
+
+Example output:
+
+```
+Seeded 5 users, 10 places, 67 signals
+Top places by signals: plc_001 (47), plc_002 (12), plc_003 (8)
+```
 
 ## Project layout
 

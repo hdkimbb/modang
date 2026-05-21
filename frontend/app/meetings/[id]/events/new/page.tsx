@@ -5,5 +5,8 @@ interface PageProps {
 }
 
 export default function NewEventPage({ params }: PageProps) {
-  return <EventFormScreen meetingId={params.id} />;
+  const apiMeetingId = params.id === "1" ? "mtg_001" : params.id;
+  return (
+    <EventFormScreen meetingId={params.id} apiMeetingId={apiMeetingId} />
+  );
 }

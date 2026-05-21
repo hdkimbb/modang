@@ -23,6 +23,16 @@ copy .env.local.example .env.local
 npm run dev
 ```
 
+### SEED + Next.js troubleshooting
+
+If you see `Cannot find module './vendor-chunks/@seed-design.js'`:
+
+1. Stop **all** running `next dev` processes (check ports 3000/3001).
+2. Delete `.next`: `Remove-Item -Recurse -Force .next`
+3. Start once: `npm run dev` (or `npm run dev:clean`)
+
+This usually happens when `.next` is deleted while the dev server is still running.
+
 Open http://localhost:3000 — use the dev link to open the schedule flow.
 
 ### Key routes (Week 1)

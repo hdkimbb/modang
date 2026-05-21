@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 
-import "@seed-design/css/all.css";
+import { SeedStyles } from "@/components/providers/SeedStyles";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -47,7 +47,7 @@ export default function RootLayout({
             } catch (e) {}
           `}
         </Script>
-        {children}
+        <SeedStyles>{children}</SeedStyles>
       </body>
     </html>
   );
