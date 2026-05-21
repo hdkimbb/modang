@@ -15,6 +15,45 @@ export interface PlaceSearchItemApi {
   external_id: string | null;
   meeting_count: number;
   avg_rating: number | null;
+  rating_count?: number;
+  would_revisit_rate?: number | null;
+  owner_message?: string | null;
+  is_owner_recommended?: boolean;
+}
+
+export interface PlaceDetailApi {
+  id: string;
+  name: string;
+  address: string;
+  district: string;
+  category: string;
+  lat: number;
+  lng: number;
+  meeting_count: number;
+  avg_rating: number | null;
+  rating_count: number;
+  would_revisit_rate: number | null;
+  owner_message: string | null;
+}
+
+export interface PlaceRatingsApi {
+  total_count: number;
+  avg_rating: number | null;
+  would_revisit_rate: number | null;
+  distribution: Record<string, number>;
+  recent: { rating: number; would_revisit: boolean; created_at: string }[];
+}
+
+export interface PlaceMeetingHistoryApi {
+  items: {
+    event_id: string;
+    meeting_id: string;
+    meeting_name: string;
+    category: string;
+    scheduled_at: string;
+    status: string;
+    attendee_count: number;
+  }[];
 }
 
 export interface PlaceSearchResponse {
@@ -33,8 +72,12 @@ export interface Place {
   distance: string | null;
   meetingCount: number;
   avgRating: number | null;
+  ratingCount?: number;
+  wouldRevisitRate?: number | null;
   externalProvider?: string | null;
   externalId?: string | null;
+  ownerMessage?: string | null;
+  isOwnerRecommended?: boolean;
 }
 
 export function mapPlaceSearchItem(item: PlaceSearchItemApi): Place {
@@ -52,7 +95,11 @@ export function mapPlaceSearchItem(item: PlaceSearchItemApi): Place {
     distance: item.distance,
     meetingCount: item.meeting_count ?? 0,
     avgRating: item.avg_rating,
+    ratingCount: item.rating_count ?? 0,
+    wouldRevisitRate: item.would_revisit_rate ?? null,
     externalProvider: item.external_provider,
     externalId: item.external_id,
+    ownerMessage: item.owner_message ?? null,
+    isOwnerRecommended: item.is_owner_recommended ?? false,
   };
 }

@@ -2,11 +2,11 @@
 
 import { Divider, ListRoot } from "@seed-design/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { useEventDraft } from "@/context/EventDraftContext";
-import { createMeetingEvent } from "@/lib/api";
+import { createMeetingEvent, getMeetings } from "@/lib/api";
 import {
   CONDITION_OPTIONS,
   FORMAT_OPTIONS,
@@ -31,6 +31,15 @@ export function EventFormScreen({
   const router = useRouter();
   const draft = useEventDraft();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    getMeetings()
+      .then((meetings) => {
+        const meeting = meetings.find((m) => m.id === apiMeetingId);
+        draft.setMeetingCategory(meeting?.category ?? null);
+      })
+      .catch(() => draft.setMeetingCategory(null));
+  }, [apiMeetingId, draft.setMeetingCategory]);
 
   const handleNext = async () => {
     const title = draft.title.trim();

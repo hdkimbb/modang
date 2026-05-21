@@ -15,7 +15,9 @@ from app.models import (
     Meeting,
     MeetingEvent,
     MeetingMember,
+    MeetingRating,
     Place,
+    PlaceRecommendationTarget,
     PlaceSignal,
     User,
 )
@@ -31,6 +33,117 @@ USERS = [
     {"id": "u_005", "name": "수민", "region": "역삼동"},
 ]
 
+OWNER_USER = {
+    "id": "usr_owner_001",
+    "name": "김사장",
+    "region": "역삼동",
+    "role": "owner",
+    "owned_place_id": "plc_001",
+}
+
+EXTRA_MEETINGS = [
+    {
+        "id": "mtg_002",
+        "host_user_id": "u_002",
+        "name": "역삼 러닝크루",
+        "category": "운동",
+        "district": "역삼동",
+        "member_count": 12,
+    },
+    {
+        "id": "mtg_003",
+        "host_user_id": "u_005",
+        "name": "강남 스터디",
+        "category": "자기계발",
+        "district": "역삼동",
+        "member_count": 6,
+    },
+]
+
+# Demo visits at 스타벅스 강남점 (plc_001) for owner dashboard
+PLACE_VISIT_EVENTS = [
+    {
+        "id": "evt_own_001",
+        "meeting_id": "mtg_001",
+        "place_id": "plc_001",
+        "title": "5월 정기 모임",
+        "scheduled_at": datetime(2026, 5, 8, 19, 0, tzinfo=timezone.utc),
+        "attendee_count": 5,
+    },
+    {
+        "id": "evt_own_002",
+        "meeting_id": "mtg_002",
+        "place_id": "plc_001",
+        "title": "러닝 후 커피",
+        "scheduled_at": datetime(2026, 5, 12, 10, 0, tzinfo=timezone.utc),
+        "attendee_count": 8,
+    },
+    {
+        "id": "evt_own_003",
+        "meeting_id": "mtg_003",
+        "place_id": "plc_001",
+        "title": "주간 스터디",
+        "scheduled_at": datetime(2026, 5, 15, 14, 0, tzinfo=timezone.utc),
+        "attendee_count": 6,
+    },
+    {
+        "id": "evt_own_004",
+        "meeting_id": "mtg_001",
+        "place_id": "plc_001",
+        "title": "독서 토론",
+        "scheduled_at": datetime(2026, 5, 18, 19, 30, tzinfo=timezone.utc),
+        "attendee_count": 5,
+    },
+    {
+        "id": "evt_own_005",
+        "meeting_id": "mtg_002",
+        "place_id": "plc_001",
+        "title": "이번 주 러닝 모임",
+        "scheduled_at": datetime(2026, 5, 20, 9, 0, tzinfo=timezone.utc),
+        "attendee_count": 10,
+    },
+    {
+        "id": "evt_own_006",
+        "meeting_id": "mtg_001",
+        "place_id": "plc_001",
+        "title": "5월 마무리 모임",
+        "scheduled_at": datetime(2026, 5, 22, 19, 0, tzinfo=timezone.utc),
+        "attendee_count": 5,
+    },
+    {
+        "id": "evt_own_007",
+        "meeting_id": "mtg_003",
+        "place_id": "plc_001",
+        "title": "시험 대비 스터디",
+        "scheduled_at": datetime(2026, 5, 25, 14, 0, tzinfo=timezone.utc),
+        "attendee_count": 6,
+    },
+    {
+        "id": "evt_own_008",
+        "meeting_id": "mtg_002",
+        "place_id": "plc_001",
+        "title": "주말 러닝",
+        "scheduled_at": datetime(2026, 5, 28, 8, 0, tzinfo=timezone.utc),
+        "attendee_count": 12,
+    },
+    {
+        "id": "evt_own_009",
+        "meeting_id": "mtg_001",
+        "place_id": "plc_001",
+        "title": "6월 첫 모임",
+        "scheduled_at": datetime(2026, 6, 5, 19, 0, tzinfo=timezone.utc),
+        "attendee_count": 5,
+    },
+    {
+        "id": "evt_own_010",
+        "meeting_id": "mtg_003",
+        "place_id": "plc_001",
+        "title": "6월 스터디",
+        "scheduled_at": datetime(2026, 4, 20, 14, 0, tzinfo=timezone.utc),
+        "attendee_count": 4,
+    },
+]
+
 PLACES = [
     {
         "id": "plc_001",
@@ -40,6 +153,10 @@ PLACES = [
         "lng": 127.0276,
         "district": "역삼동",
         "category": "cafe",
+        "owner_message": (
+            "독서모임 환영합니다! 조용한 2층 공간, 콘센트 완비, 음료 리필 가능합니다."
+        ),
+        "owner_message_active": True,
     },
     {
         "id": "plc_002",
@@ -151,6 +268,14 @@ SIGNAL_COUNTS: dict[str, int] = {
 
 SEASON_START = datetime(2026, 3, 1, tzinfo=timezone.utc)
 SEASON_END = datetime(2026, 5, 31, 23, 59, 59, tzinfo=timezone.utc)
+SEED_REFERENCE_NOW = datetime(2026, 5, 21, 12, 0, tzinfo=timezone.utc)
+
+
+def _event_status_for(scheduled_at: datetime) -> str:
+    scheduled = scheduled_at
+    if scheduled.tzinfo is None:
+        scheduled = scheduled.replace(tzinfo=timezone.utc)
+    return "ended" if scheduled < SEED_REFERENCE_NOW else "scheduled"
 
 
 def _random_occurred_at() -> datetime:
@@ -164,15 +289,11 @@ def _build_signals_for_place(
     count: int,
 ) -> list[PlaceSignal]:
     signals: list[PlaceSignal] = []
-    selected_count = max(1, int(count * 0.35))
 
     for i in range(count):
-        is_selected = i < selected_count
-        signal_type = "selected" if is_selected else "rated"
-        weight = 1.0 if is_selected else float(random.choice([3, 4, 4, 5, 5]))
+        signal_type = "selected"
+        weight = 1.0
         user_id = random.choice(USER_IDS)
-        rating_meta = None if is_selected else {"rating": int(weight)}
-
         signals.append(
             PlaceSignal(
                 id=generate_id("sig"),
@@ -186,7 +307,6 @@ def _build_signals_for_place(
                 meta={
                     "district": place["district"],
                     "category": place["category"],
-                    **(rating_meta or {}),
                 },
             ),
         )
@@ -195,13 +315,36 @@ def _build_signals_for_place(
 
 
 def clear_all(session) -> None:
+    session.execute(delete(MeetingRating))
     session.execute(delete(MeetingEvent))
     session.execute(delete(MeetingMember))
     session.execute(delete(Meeting))
+    session.execute(delete(PlaceRecommendationTarget))
     session.execute(delete(PlaceSignal))
     session.execute(delete(Place))
     session.execute(delete(User))
     session.flush()
+
+
+def upsert_owner_user(session) -> None:
+    """Insert or update owner user without wiping other data."""
+    existing = session.get(User, OWNER_USER["id"])
+    if existing is not None:
+        existing.name = OWNER_USER["name"]
+        existing.region = OWNER_USER["region"]
+        existing.role = OWNER_USER["role"]
+        existing.owned_place_id = OWNER_USER["owned_place_id"]
+        return
+    session.add(
+        User(
+            id=OWNER_USER["id"],
+            name=OWNER_USER["name"],
+            region=OWNER_USER["region"],
+            avatar_url=None,
+            role=OWNER_USER["role"],
+            owned_place_id=OWNER_USER["owned_place_id"],
+        ),
+    )
 
 
 def seed_users(session) -> int:
@@ -212,9 +355,21 @@ def seed_users(session) -> int:
                 name=row["name"],
                 region=row["region"],
                 avatar_url=None,
+                role=row.get("role", "user"),
+                owned_place_id=row.get("owned_place_id"),
             ),
         )
-    return len(USERS)
+    session.add(
+        User(
+            id=OWNER_USER["id"],
+            name=OWNER_USER["name"],
+            region=OWNER_USER["region"],
+            avatar_url=None,
+            role=OWNER_USER["role"],
+            owned_place_id=OWNER_USER["owned_place_id"],
+        ),
+    )
+    return len(USERS) + 1
 
 
 def seed_places(session) -> int:
@@ -223,11 +378,89 @@ def seed_places(session) -> int:
     return len(PLACES)
 
 
-def seed_meeting(session) -> int:
+def seed_meetings(session) -> int:
     session.add(Meeting(**MEETING))
     for row in MEETING_MEMBERS:
         session.add(MeetingMember(**row))
-    return 1
+    for row in EXTRA_MEETINGS:
+        session.add(Meeting(**row))
+    return 1 + len(EXTRA_MEETINGS)
+
+
+def seed_place_visit_events(session) -> int:
+    for row in PLACE_VISIT_EVENTS:
+        status = _event_status_for(row["scheduled_at"])
+        session.add(
+            MeetingEvent(
+                id=row["id"],
+                meeting_id=row["meeting_id"],
+                place_id=row["place_id"],
+                title=row["title"],
+                scheduled_at=row["scheduled_at"],
+                attendee_count=row["attendee_count"],
+                status=status,
+            ),
+        )
+        meeting = session.get(Meeting, row["meeting_id"])
+        if meeting is not None:
+            session.add(
+                PlaceSignal(
+                    id=generate_id("sig"),
+                    place_id=row["place_id"],
+                    signal_type="selected",
+                    weight=1.0,
+                    source_ref=row["id"],
+                    user_id=meeting.host_user_id,
+                    occurred_at=row["scheduled_at"],
+                    is_void=False,
+                    meta={
+                        "meeting_id": row["meeting_id"],
+                        "category": meeting.category,
+                        "district": meeting.district,
+                    },
+                ),
+            )
+    return len(PLACE_VISIT_EVENTS)
+
+
+def seed_meeting_ratings(session) -> int:
+    ended_events = session.scalars(
+        select(MeetingEvent).where(MeetingEvent.status == "ended"),
+    ).all()
+    created = 0
+
+    for event in ended_events:
+        review_count = random.randint(2, min(5, len(USER_IDS)))
+        reviewers = random.sample(USER_IDS, review_count)
+        for user_id in reviewers:
+            rating_value = random.randint(3, 5)
+            would_revisit = random.random() < 0.7
+            rating_id = generate_id("rtg")
+            session.add(
+                MeetingRating(
+                    id=rating_id,
+                    event_id=event.id,
+                    user_id=user_id,
+                    rating=rating_value,
+                    would_revisit=would_revisit,
+                ),
+            )
+            session.add(
+                PlaceSignal(
+                    id=generate_id("sig"),
+                    place_id=event.place_id,
+                    signal_type="rated",
+                    weight=float(rating_value),
+                    source_ref=event.id,
+                    user_id=user_id,
+                    occurred_at=event.scheduled_at,
+                    is_void=False,
+                    meta={"event_id": event.id, "rating": rating_value},
+                ),
+            )
+            created += 1
+
+    return created
 
 
 def seed_signals(session) -> list[PlaceSignal]:
@@ -241,14 +474,21 @@ def seed_signals(session) -> list[PlaceSignal]:
     return all_signals
 
 
-def print_summary(session, signal_count: int, meeting_count: int) -> None:
+def print_summary(
+    session,
+    signal_count: int,
+    meeting_count: int,
+    event_count: int = 0,
+    rating_count: int = 0,
+) -> None:
     user_count = session.scalar(select(func.count()).select_from(User)) or 0
     place_count = session.scalar(select(func.count()).select_from(Place)) or 0
     member_count = session.scalar(select(func.count()).select_from(MeetingMember)) or 0
 
     print(
         f"Seeded {user_count} users, {place_count} places, "
-        f"{signal_count} signals, {meeting_count} meetings ({member_count} members)",
+        f"{signal_count} signals, {meeting_count} meetings ({member_count} members), "
+        f"{event_count} place visit events, {rating_count} ratings",
     )
 
     rows = session.execute(
@@ -273,9 +513,13 @@ def main() -> None:
         seed_users(session)
         seed_places(session)
         signals = seed_signals(session)
-        meetings = seed_meeting(session)
+        meetings = seed_meetings(session)
+        session.flush()
+        events = seed_place_visit_events(session)
+        session.flush()
+        ratings_count = seed_meeting_ratings(session)
         session.commit()
-        print_summary(session, len(signals), meetings)
+        print_summary(session, len(signals), meetings, events, ratings_count)
     except Exception:
         session.rollback()
         raise

@@ -23,6 +23,7 @@ interface EventDraftContextValue extends EventDraft {
   setTime: (time: string) => void;
   setRepeat: (repeat: string) => void;
   setPlace: (place: Place | null) => void;
+  setMeetingCategory: (category: string | null) => void;
   setCapacity: (capacity: number) => void;
   toggleCondition: (label: string) => void;
   toggleFormat: (label: string) => void;
@@ -58,6 +59,10 @@ export function EventDraftProvider({ children }: { children: ReactNode }) {
 
   const setPlace = useCallback((place: Place | null) => {
     setDraft((prev) => ({ ...prev, place }));
+  }, []);
+
+  const setMeetingCategory = useCallback((category: string | null) => {
+    setDraft((prev) => ({ ...prev, meetingCategory: category }));
   }, []);
 
   const setCapacity = useCallback((capacity: number) => {
@@ -97,6 +102,7 @@ export function EventDraftProvider({ children }: { children: ReactNode }) {
       setTime,
       setRepeat,
       setPlace,
+      setMeetingCategory,
       setCapacity,
       toggleCondition,
       toggleFormat,
@@ -109,6 +115,7 @@ export function EventDraftProvider({ children }: { children: ReactNode }) {
       setTime,
       setRepeat,
       setPlace,
+      setMeetingCategory,
       setCapacity,
       toggleCondition,
       toggleFormat,

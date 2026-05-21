@@ -17,6 +17,7 @@ export interface EventDraft {
   conditions: string[];
   formats: string[];
   expandedSection: ExpandedSection;
+  meetingCategory: string | null;
 }
 
 export const DEFAULT_EVENT_DRAFT: EventDraft = {
@@ -29,4 +30,5 @@ export const DEFAULT_EVENT_DRAFT: EventDraft = {
   conditions: ["누구나 참여 가능"],
   formats: ["시간 협의 가능", "비용 각자 부담"],
   expandedSection: null,
+  meetingCategory: null,
 };

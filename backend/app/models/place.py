@@ -1,4 +1,4 @@
-from sqlalchemy import Float, Index, String, text
+from sqlalchemy import Boolean, Float, Index, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import ModelBase
@@ -29,8 +29,19 @@ class Place(ModelBase):
     business_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
     external_provider: Mapped[str | None] = mapped_column(String(20), nullable=True)
     external_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    owner_message: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    owner_message_active: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
 
     signals: Mapped[list["PlaceSignal"]] = relationship(
         "PlaceSignal",
         back_populates="place",
+    )
+    recommendation_targets: Mapped[list["PlaceRecommendationTarget"]] = relationship(
+        "PlaceRecommendationTarget",
+        back_populates="place",
+        cascade="all, delete-orphan",
     )

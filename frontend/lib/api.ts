@@ -2,6 +2,9 @@ import type { MeetingApi } from "@/lib/meetings-map";
 import {
   mapPlaceSearchItem,
   type Place,
+  type PlaceDetailApi,
+  type PlaceMeetingHistoryApi,
+  type PlaceRatingsApi,
   type PlaceSearchResponse,
 } from "@/lib/types/place";
 
@@ -28,16 +31,28 @@ export async function getHealth(): Promise<{ message: string }> {
   return fetchApi("/");
 }
 
-export async function searchPlaces(query: string): Promise<Place[]> {
+export async function searchPlaces(
+  query: string,
+  meetingCategory?: string | null,
+): Promise<Place[]> {
   const params = new URLSearchParams({ q: query.trim() });
+  if (meetingCategory?.trim()) {
+    params.set("meeting_category", meetingCategory.trim());
+  }
   const data = await fetchApi<PlaceSearchResponse>(
     `/api/v1/places/search?${params.toString()}`,
   );
   return data.items.map(mapPlaceSearchItem);
 }
 
-export async function getRecommendedPlaces(limit = 2): Promise<Place[]> {
+export async function getRecommendedPlaces(
+  limit = 2,
+  meetingCategory?: string | null,
+): Promise<Place[]> {
   const params = new URLSearchParams({ limit: String(limit) });
+  if (meetingCategory?.trim()) {
+    params.set("meeting_category", meetingCategory.trim());
+  }
   const data = await fetchApi<PlaceSearchResponse>(
     `/api/v1/places/recommendations?${params.toString()}`,
   );
@@ -92,6 +107,57 @@ export type CreateMeetingRequest = {
 export async function getMeetings(): Promise<MeetingApi[]> {
   const data = await fetchApi<{ items: MeetingApi[] }>("/api/v1/meetings");
   return data.items;
+}
+
+export async function getPlaceDetail(placeId: string): Promise<PlaceDetailApi> {
+  return fetchApi<PlaceDetailApi>(`/api/v1/places/${placeId}`);
+}
+
+export async function getPlaceRatings(placeId: string): Promise<PlaceRatingsApi> {
+  return fetchApi<PlaceRatingsApi>(`/api/v1/places/${placeId}/ratings`);
+}
+
+export async function getPlaceMeetingHistory(
+  placeId: string,
+  limit = 20,
+): Promise<PlaceMeetingHistoryApi> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return fetchApi<PlaceMeetingHistoryApi>(
+    `/api/v1/places/${placeId}/meeting-history?${params.toString()}`,
+  );
+}
+
+export type CreateRatingRequest = {
+  user_id: string;
+  rating: number;
+  would_revisit: boolean;
+};
+
+export type RatingResponse = {
+  id: string;
+  event_id: string;
+  user_id: string;
+  rating: number;
+  would_revisit: boolean;
+  created_at: string;
+};
+
+export async function createEventRating(
+  eventId: string,
+  data: CreateRatingRequest,
+): Promise<RatingResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/events/${eventId}/ratings`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(
+      err.detail?.error?.message || "평가 등록에 실패했어요",
+    );
+  }
+  return res.json() as Promise<RatingResponse>;
 }
 
 export async function createMeeting(

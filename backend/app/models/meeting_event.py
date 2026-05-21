@@ -39,3 +39,7 @@ class MeetingEvent(ModelBase):
 
     meeting: Mapped["Meeting"] = relationship("Meeting", back_populates="events")
     place: Mapped["Place"] = relationship("Place")
+    ratings: Mapped[list["MeetingRating"]] = relationship(
+        "MeetingRating",
+        back_populates="event",
+    )

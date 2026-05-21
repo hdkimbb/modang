@@ -7,8 +7,10 @@ from app.config import get_settings
 from app.models import (  # noqa: F401
     Meeting,
     MeetingEvent,
+    MeetingRating,
     MeetingMember,
     Place,
+    PlaceRecommendationTarget,
     PlaceSignal,
     User,
 )
