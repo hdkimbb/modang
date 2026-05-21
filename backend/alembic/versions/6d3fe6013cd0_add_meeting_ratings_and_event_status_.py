@@ -49,14 +49,14 @@ def upgrade() -> None:
         """
         UPDATE meeting_events
         SET status = 'ended'
-        WHERE scheduled_at < datetime('now')
+        WHERE scheduled_at < CURRENT_TIMESTAMP
         """,
     )
     op.execute(
         """
         UPDATE meeting_events
         SET status = 'scheduled'
-        WHERE scheduled_at >= datetime('now')
+        WHERE scheduled_at >= CURRENT_TIMESTAMP
         """,
     )
 
