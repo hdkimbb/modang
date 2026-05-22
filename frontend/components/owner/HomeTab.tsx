@@ -1,13 +1,11 @@
 "use client";
 
-import Link from "next/link";
-
 import { OwnerAwardsCard } from "@/components/owner/OwnerAwardsCard";
+import { OwnerRankingCard } from "@/components/owner/OwnerRankingCard";
 import {
   OWNER_FILTER_EMPTY_MESSAGE,
   type OwnerMeetingFilter,
 } from "@/lib/owner-meeting-filter";
-import { rankingCategoryLabel } from "@/lib/types/ranking";
 import type { OwnerDashboard, OwnerMeetingVisit } from "@/lib/types/owner";
 
 const LIST_TITLE: Record<OwnerMeetingFilter, string> = {
@@ -46,37 +44,14 @@ export function HomeTab({
       { id: "upcoming", label: "예정", count: data.stats.upcoming_count },
     ];
 
-  const ranking = data.ranking;
-  const rankingHref = ranking
-    ? `/ranking?district=${encodeURIComponent(ranking.district)}&category=${encodeURIComponent(ranking.category)}`
-    : "/ranking";
-
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
-      <OwnerAwardsCard placeId={data.place.id} />
+      <section className="grid grid-cols-2 gap-3 px-4 pt-3">
+        <OwnerAwardsCard placeId={data.place.id} />
+        <OwnerRankingCard ranking={data.ranking} />
+      </section>
 
-      {ranking && ranking.rank != null ? (
-        <section className="px-4 pt-4">
-          <Link
-            href={rankingHref}
-            className="block rounded-2xl border border-orange-200 bg-orange-50 p-4 transition hover:border-orange-300"
-          >
-            <p className="text-sm font-medium text-orange-800">우리 가게 랭킹</p>
-            <p className="mt-1 text-base font-bold text-gray-900">
-              {ranking.district} {rankingCategoryLabel(ranking.category)}{" "}
-              {ranking.rank}위
-            </p>
-            <p className="mt-1 text-sm text-gray-600">
-              신뢰 점수 {ranking.score.toFixed(1)}점 · 등록 장소 {ranking.listed_count}곳
-            </p>
-            <span className="mt-2 inline-block text-sm font-medium text-orange-700">
-              랭킹 전체 보기
-            </span>
-          </Link>
-        </section>
-      ) : null}
-
-      <section className="grid grid-cols-3 gap-3 p-4">
+      <section className="grid grid-cols-3 gap-3 px-4 pb-2 pt-3">
         {filterChips.map((chip) => {
           const active = meetingFilter === chip.id;
           return (

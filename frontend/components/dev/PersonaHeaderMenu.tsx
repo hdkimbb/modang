@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 import { usePersona } from "@/context/PersonaContext";
@@ -13,7 +14,27 @@ type PersonaHeaderMenuProps = {
 /** Owner NavigationTop title 영역용 페르소나 전환 메뉴 */
 export function PersonaHeaderMenu({ open, onOpenChange }: PersonaHeaderMenuProps) {
   const { personas, persona, setPersonaId, isOwner } = usePersona();
+  const pathname = usePathname();
+  const router = useRouter();
   const panelRef = useRef<HTMLDivElement>(null);
+
+  const handlePersonaSelect = (id: string) => {
+    const next = personas.find((p) => p.id === id);
+    setPersonaId(id);
+    onOpenChange(false);
+    if (!next) return;
+
+    const onOwnerRoute =
+      pathname === "/owner" || pathname.startsWith("/owner/");
+
+    if (next.role !== "owner" && onOwnerRoute) {
+      router.push("/meetings");
+      return;
+    }
+    if (next.role === "owner" && !onOwnerRoute) {
+      router.push("/owner");
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -43,10 +64,7 @@ export function PersonaHeaderMenu({ open, onOpenChange }: PersonaHeaderMenuProps
       <select
         id="persona-header-select"
         value={persona.id}
-        onChange={(e) => {
-          setPersonaId(e.target.value);
-          onOpenChange(false);
-        }}
+        onChange={(e) => handlePersonaSelect(e.target.value)}
         className="w-full rounded-lg border border-seed-gray-300 bg-seed-gray-00 px-3 py-2 text-sm text-seed-gray-900"
       >
         {personas.map((p) => (

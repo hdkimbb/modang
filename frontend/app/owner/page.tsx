@@ -267,7 +267,7 @@ function OwnerDashboardContent() {
       <div className="relative shrink-0">
         <NavigationTop
           variant="main"
-          title={data.place.name}
+          title={`${persona.name} 대시보드`}
           showExpandMore
           onTitleClick={() => setPersonaMenuOpen((v) => !v)}
           divider
@@ -288,9 +288,10 @@ function OwnerDashboardContent() {
           onOpenChange={setPersonaMenuOpen}
         />
       </div>
-      <p className="shrink-0 px-4 pb-2 text-sm text-seed-gray-500">
-        {data.place.address}
-      </p>
+      <div className="shrink-0 px-4 pb-2">
+        <p className="text-sm font-medium text-seed-gray-900">{data.place.name}</p>
+        <p className="mt-0.5 text-xs text-seed-gray-500">{data.place.address}</p>
+      </div>
 
       <Tabs
         items={OWNER_TABS}
