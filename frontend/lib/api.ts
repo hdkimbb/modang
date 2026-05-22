@@ -15,6 +15,7 @@ import type {
   MeetingPostItemApi,
   MeetingPostListApi,
 } from "@/lib/types/meeting-post";
+import type { PendingRatingsListApi } from "@/lib/types/pending-rating";
 import type { Persona, PersonaListApi } from "@/lib/types/persona";
 import type {
   PlaceAwardsResponseApi,
@@ -133,6 +134,15 @@ export type CreateMeetingRequest = {
 export async function getPersonas(): Promise<Persona[]> {
   const data = await fetchApi<PersonaListApi>("/api/v1/users/personas");
   return data.items;
+}
+
+export async function getPendingRatings(
+  userId: string,
+): Promise<PendingRatingsListApi> {
+  const params = new URLSearchParams({ user_id: userId });
+  return fetchApi<PendingRatingsListApi>(
+    `/api/v1/users/me/pending-ratings?${params.toString()}`,
+  );
 }
 
 export async function getMeetings(): Promise<MeetingApi[]> {

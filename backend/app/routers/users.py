@@ -7,14 +7,32 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.models.meeting_member import MeetingMember
 from app.models.user import User
+from app.schemas.pending_rating import PendingRatingsListResponse
 from app.schemas.user import (
     UserPersonaListResponse,
     UserPersonaResponse,
     UserSearchItem,
     UserSearchResponse,
 )
+from app.services.pending_ratings import fetch_pending_ratings
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
+
+DEFAULT_USER_ID = "u_001"
+
+
+@router.get("/me/pending-ratings", response_model=PendingRatingsListResponse)
+def list_pending_ratings(
+    user_id: str = Query(
+        default=DEFAULT_USER_ID,
+        min_length=1,
+        max_length=32,
+        description="Dev stub until auth",
+    ),
+    db: Session = Depends(get_db),
+) -> PendingRatingsListResponse:
+    items = fetch_pending_ratings(db, user_id.strip())
+    return PendingRatingsListResponse(items=items)
 
 
 @router.get("/personas", response_model=UserPersonaListResponse)

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { PendingRatingsSection } from "@/components/meetings/PendingRatingsSection";
 import { CreateMeetingFab } from "@/components/meetings/list/CreateMeetingFab";
 import { MeetingListCard } from "@/components/meetings/list/MeetingListCard";
 import { MeetingsCategoryFilter } from "@/components/meetings/list/MeetingsCategoryFilter";
@@ -48,6 +49,7 @@ export default function MeetingsPage() {
   return (
     <div className="relative flex min-h-0 flex-1 flex-col pb-28">
       <MeetingsHeader onSearchClick={() => setShowSearch((v) => !v)} />
+      <PendingRatingsSection />
       {showSearch ? (
         <MeetingsSearchBar value={searchQuery} onChange={setSearchQuery} />
       ) : null}

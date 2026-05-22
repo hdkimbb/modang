@@ -277,6 +277,68 @@ SEASON_END = datetime(2026, 5, 31, 23, 59, 59, tzinfo=timezone.utc)
 KST = timezone(timedelta(hours=9))
 SEED_REFERENCE_NOW = datetime(2026, 5, 21, 12, 0, tzinfo=KST)
 
+# Pending rating prompt demo (u_001 member); no meeting_ratings rows
+MEETING_RATING_DEMO = {
+    "id": "mtg_rating",
+    "host_user_id": "u_001",
+    "name": "토요일 클라이밍",
+    "category": "운동",
+    "district": "잠실",
+    "member_count": 3,
+}
+
+MEETING_RATING_MEMBERS = [
+    {"id": "mm_r01", "meeting_id": "mtg_rating", "user_id": "u_001", "role": "host"},
+    {"id": "mm_r02", "meeting_id": "mtg_rating", "user_id": "u_002", "role": "member"},
+]
+
+PENDING_RATING_EVENTS = [
+    {
+        "id": "evt_rating_001",
+        "meeting_id": "mtg_rating",
+        "place_id": "plc_006",
+        "title": "잠실 클라이밍센터 모임",
+        "scheduled_at": datetime(2026, 5, 21, 10, 0, tzinfo=KST),
+        "attendee_count": 5,
+    },
+    {
+        "id": "evt_rating_002",
+        "meeting_id": "mtg_rating",
+        "place_id": "plc_007",
+        "title": "역삼 러닝 후 식사",
+        "scheduled_at": datetime(2026, 5, 19, 14, 0, tzinfo=KST),
+        "attendee_count": 4,
+    },
+    {
+        "id": "evt_rating_003",
+        "meeting_id": "mtg_rating",
+        "place_id": "plc_008",
+        "title": "연남 브런치 모임",
+        "scheduled_at": datetime(2026, 5, 16, 11, 0, tzinfo=KST),
+        "attendee_count": 6,
+    },
+    {
+        "id": "evt_rating_old",
+        "meeting_id": "mtg_rating",
+        "place_id": "plc_009",
+        "title": "7일 초과 일정 (미노출)",
+        "scheduled_at": datetime(2026, 5, 14, 10, 0, tzinfo=KST),
+        "attendee_count": 4,
+    },
+    {
+        "id": "evt_rating_nonmember",
+        "meeting_id": "mtg_003",
+        "place_id": "plc_010",
+        "title": "u_001 미참여 일정",
+        "scheduled_at": datetime(2026, 5, 20, 10, 0, tzinfo=KST),
+        "attendee_count": 6,
+    },
+]
+
+PENDING_RATING_EVENT_IDS = frozenset(
+    row["id"] for row in PENDING_RATING_EVENTS
+)
+
 SEASONS = [
     {
         "id": "season_2025_q4",
@@ -601,7 +663,10 @@ def seed_meetings(session) -> int:
         session.add(MeetingMember(**row))
     for row in EXTRA_MEETINGS:
         session.add(Meeting(**row))
-    return 1 + len(EXTRA_MEETINGS)
+    session.add(Meeting(**MEETING_RATING_DEMO))
+    for row in MEETING_RATING_MEMBERS:
+        session.add(MeetingMember(**row))
+    return 2 + len(EXTRA_MEETINGS)
 
 
 def seed_place_visit_events(session) -> int:
@@ -638,6 +703,22 @@ def seed_place_visit_events(session) -> int:
                 ),
             )
     return len(PLACE_VISIT_EVENTS)
+
+
+def seed_pending_rating_events(session) -> int:
+    for row in PENDING_RATING_EVENTS:
+        session.add(
+            MeetingEvent(
+                id=row["id"],
+                meeting_id=row["meeting_id"],
+                place_id=row["place_id"],
+                title=row["title"],
+                scheduled_at=row["scheduled_at"],
+                attendee_count=row["attendee_count"],
+                status="ended",
+            ),
+        )
+    return len(PENDING_RATING_EVENTS)
 
 
 def seed_meeting_post_comments(session) -> int:
@@ -738,6 +819,8 @@ def seed_meeting_ratings(session) -> int:
     created = 0
 
     for event in ended_events:
+        if event.id in PENDING_RATING_EVENT_IDS:
+            continue
         review_count = random.randint(2, min(5, len(USER_IDS)))
         reviewers = random.sample(USER_IDS, review_count)
         for user_id in reviewers:
@@ -827,6 +910,7 @@ def main() -> None:
         meetings = seed_meetings(session)
         session.flush()
         events = seed_place_visit_events(session)
+        pending_events = seed_pending_rating_events(session)
         session.flush()
         ratings_count = seed_meeting_ratings(session)
         posts_count = seed_meeting_posts(session)
@@ -842,7 +926,7 @@ def main() -> None:
             session,
             len(signals),
             meetings,
-            events,
+            events + pending_events,
             ratings_count,
             posts_count,
             comments_count,
