@@ -14,6 +14,11 @@ from app.schemas.meeting import (
     MeetingEventPlaceSummary,
     MeetingEventSummary,
 )
+from app.services.rating_eligibility import (
+    rated_event_ids_for_user,
+    rating_flags_for_event,
+    user_is_meeting_member,
+)
 
 
 def _rating_stats_for_events(
@@ -43,12 +48,28 @@ def _rating_stats_for_events(
 def event_rows_to_summaries(
     db: Session,
     rows: list[tuple[MeetingEvent, Place]],
+    *,
+    meeting_id: str | None = None,
+    user_id: str | None = None,
 ) -> list[MeetingEventSummary]:
     event_ids = [event.id for event, _ in rows]
     rating_map = _rating_stats_for_events(db, event_ids)
+    rated_by_me: set[str] = set()
+    is_member = False
+    if user_id and meeting_id:
+        is_member = user_is_meeting_member(db, meeting_id, user_id)
+        rated_by_me = rated_event_ids_for_user(db, user_id, event_ids)
+
     items: list[MeetingEventSummary] = []
     for event, place in rows:
         avg_rating, rating_count = rating_map.get(event.id, (None, 0))
+        has_rated = event.id in rated_by_me
+        has_rated_by_me, can_rate = rating_flags_for_event(
+            event,
+            user_id=user_id,
+            is_member=is_member,
+            has_rated_by_me=has_rated,
+        )
         items.append(
             MeetingEventSummary(
                 event_id=event.id,
@@ -62,6 +83,8 @@ def event_rows_to_summaries(
                 ),
                 avg_rating=avg_rating,
                 rating_count=rating_count,
+                has_rated_by_me=has_rated_by_me,
+                can_rate=can_rate,
             ),
         )
     return items

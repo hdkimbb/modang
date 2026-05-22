@@ -72,6 +72,8 @@ class MeetingEventSummary(BaseModel):
     place: MeetingEventPlaceSummary
     avg_rating: float | None = None
     rating_count: int = 0
+    has_rated_by_me: bool = False
+    can_rate: bool = False
 
 
 class MeetingDetailResponse(BaseModel):

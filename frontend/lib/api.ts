@@ -158,8 +158,16 @@ export async function getMeetingDetail(
 
 export async function getMeetingEvents(
   meetingId: string,
+  userId?: string,
 ): Promise<MeetingEventsListApi> {
-  return fetchApi(`/api/v1/meetings/${meetingId}/events`);
+  const params = new URLSearchParams();
+  if (userId?.trim()) {
+    params.set("user_id", userId.trim());
+  }
+  const qs = params.toString();
+  return fetchApi(
+    `/api/v1/meetings/${meetingId}/events${qs ? `?${qs}` : ""}`,
+  );
 }
 
 export async function getMeetingPlaceHistory(

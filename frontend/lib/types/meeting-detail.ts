@@ -18,6 +18,8 @@ export interface MeetingEventSummaryApi {
   place: MeetingEventPlaceApi;
   avg_rating: number | null;
   rating_count: number;
+  has_rated_by_me: boolean;
+  can_rate: boolean;
 }
 
 export interface MeetingHostApi {

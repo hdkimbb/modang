@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -22,6 +22,8 @@ from app.services.meeting_events import (
 
 router = APIRouter(prefix="/api/v1/meetings", tags=["meeting-events"])
 
+DEFAULT_USER_ID = "u_001"
+
 
 def _error(status_code: int, code: str, message: str) -> HTTPException:
     return HTTPException(
@@ -33,6 +35,12 @@ def _error(status_code: int, code: str, message: str) -> HTTPException:
 @router.get("/{meeting_id}/events", response_model=MeetingEventsListResponse)
 def list_meeting_events(
     meeting_id: str,
+    user_id: str = Query(
+        default=DEFAULT_USER_ID,
+        min_length=1,
+        max_length=32,
+        description="Dev stub until auth",
+    ),
     db: Session = Depends(get_db),
 ) -> MeetingEventsListResponse:
     meeting = db.get(Meeting, meeting_id)
@@ -43,7 +51,14 @@ def list_meeting_events(
             "모임을 찾을 수 없어요.",
         )
     rows = fetch_meeting_event_rows(db, meeting_id)
-    return MeetingEventsListResponse(items=event_rows_to_summaries(db, rows))
+    return MeetingEventsListResponse(
+        items=event_rows_to_summaries(
+            db,
+            rows,
+            meeting_id=meeting_id,
+            user_id=user_id.strip(),
+        ),
+    )
 
 
 @router.post(

@@ -13,10 +13,25 @@ interface MeetingEventCardProps {
 
 export function MeetingEventCard({ event, onRate }: MeetingEventCardProps) {
   const isEnded = event.status === "ended";
+  const showRateButton = event.can_rate && onRate;
 
   return (
-    <article className="rounded-xl border border-gray-100 bg-white p-4">
-      <div className="flex items-start gap-2 text-sm text-gray-700">
+    <article className="relative rounded-xl border border-gray-100 bg-white p-4">
+      {showRateButton ? (
+        <button
+          type="button"
+          onClick={onRate}
+          className="absolute right-3 top-3 rounded-md bg-seed-carrot-100 px-3 py-1.5 text-[13px] font-medium text-seed-carrot-500"
+        >
+          평가하기
+        </button>
+      ) : null}
+
+      <div
+        className={`flex items-start gap-2 text-sm text-gray-700 ${
+          showRateButton ? "pr-20" : ""
+        }`}
+      >
         <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" strokeWidth={1.75} />
         <div className="min-w-0 flex-1">
           <p className="font-medium text-gray-900">
@@ -52,25 +67,6 @@ export function MeetingEventCard({ event, onRate }: MeetingEventCardProps) {
           />
           {event.avg_rating.toFixed(1)} ({event.rating_count}명 평가)
         </p>
-      ) : null}
-
-      {isEnded && onRate ? (
-        <div className="mt-3 flex gap-2">
-          <button
-            type="button"
-            onClick={onRate}
-            className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-medium text-orange-700"
-          >
-            평가하기
-          </button>
-          <button
-            type="button"
-            onClick={() => alert("정산 기능은 준비 중이에요")}
-            className="rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600"
-          >
-            정산하기
-          </button>
-        </div>
       ) : null}
     </article>
   );

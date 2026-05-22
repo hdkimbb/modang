@@ -18,11 +18,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { NavigationTop } from "@/components/common/NavigationTop";
 import { Tabs } from "@/components/common/Tabs";
 import { PostActionSheet } from "@/components/meetings/PostActionSheet";
+import { RatingModal } from "@/components/meetings/RatingModal";
+import { usePersona } from "@/context/PersonaContext";
 import {
   getMeetingDetail,
   getMeetingEvents,
   getMeetingPosts,
 } from "@/lib/api";
+import { notifyRatingSubmitted } from "@/lib/rating-sync";
 import { resolveApiMeetingId } from "@/lib/resolve-meeting-id";
 import { DEFAULT_MEETING_THUMBNAIL } from "@/lib/types/meeting-list";
 import type {
@@ -55,6 +58,7 @@ const DETAIL_TABS = [
 
 export function MeetingDetailScreen({ routeMeetingId }: MeetingDetailScreenProps) {
   const router = useRouter();
+  const { userId } = usePersona();
   const apiMeetingId = resolveApiMeetingId(routeMeetingId);
 
   const [detail, setDetail] = useState<MeetingDetailApi | null>(null);
@@ -66,6 +70,9 @@ export function MeetingDetailScreen({ routeMeetingId }: MeetingDetailScreenProps
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [ratingEvent, setRatingEvent] = useState<MeetingEventSummaryApi | null>(
+    null,
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -93,11 +100,23 @@ export function MeetingDetailScreen({ routeMeetingId }: MeetingDetailScreenProps
   useEffect(() => {
     if (!detail || detailTab !== "schedule") return;
     setScheduleLoading(true);
-    void getMeetingEvents(apiMeetingId)
+    void getMeetingEvents(apiMeetingId, userId)
       .then(({ items }) => setAllEvents(items))
       .catch(() => setAllEvents([]))
       .finally(() => setScheduleLoading(false));
-  }, [apiMeetingId, detail, detailTab]);
+  }, [apiMeetingId, detail, detailTab, userId]);
+
+  const handleEventRated = useCallback((eventId: string) => {
+    setAllEvents((prev) =>
+      prev.map((ev) =>
+        ev.event_id === eventId
+          ? { ...ev, has_rated_by_me: true, can_rate: false }
+          : ev,
+      ),
+    );
+    setRatingEvent(null);
+    notifyRatingSubmitted(eventId);
+  }, []);
 
   const { upcomingEvents, pastEvents } = useMemo(() => {
     const now = Date.now();
@@ -328,7 +347,14 @@ export function MeetingDetailScreen({ routeMeetingId }: MeetingDetailScreenProps
                   <ul className="flex flex-col gap-3">
                     {pastEvents.map((ev) => (
                       <li key={ev.event_id}>
-                        <MeetingEventCard event={ev} />
+                        <MeetingEventCard
+                          event={ev}
+                          onRate={
+                            ev.can_rate
+                              ? () => setRatingEvent(ev)
+                              : undefined
+                          }
+                        />
                       </li>
                     ))}
                   </ul>
@@ -359,6 +385,17 @@ export function MeetingDetailScreen({ routeMeetingId }: MeetingDetailScreenProps
         meetingId={routeMeetingId}
         onClose={() => setSheetOpen(false)}
       />
+
+      {ratingEvent ? (
+        <RatingModal
+          open
+          eventId={ratingEvent.event_id}
+          placeName={ratingEvent.place.name}
+          meetingLabel={`${detail.name} · ${ratingEvent.title}`}
+          onClose={() => setRatingEvent(null)}
+          onSuccess={() => handleEventRated(ratingEvent.event_id)}
+        />
+      ) : null}
     </div>
   );
 }

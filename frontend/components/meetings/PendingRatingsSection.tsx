@@ -6,6 +6,10 @@ import { PendingRatingCard } from "@/components/meetings/PendingRatingCard";
 import { RatingModal } from "@/components/meetings/RatingModal";
 import { usePersona } from "@/context/PersonaContext";
 import { getPendingRatings } from "@/lib/api";
+import {
+  notifyRatingSubmitted,
+  subscribeRatingSubmitted,
+} from "@/lib/rating-sync";
 import type { PendingRatingItemApi } from "@/lib/types/pending-rating";
 
 const DISMISS_STORAGE_PREFIX = "modang:pendingRatingDismissed:";
@@ -55,6 +59,15 @@ export function PendingRatingsSection() {
     void load();
   }, [ready, userId, load]);
 
+  useEffect(() => {
+    return subscribeRatingSubmitted((eventId) => {
+      setItems((prev) => prev.filter((item) => item.event_id !== eventId));
+      setModalItem((current) =>
+        current?.event_id === eventId ? null : current,
+      );
+    });
+  }, []);
+
   const visibleItems = useMemo(
     () => items.filter((item) => !dismissed.has(item.event_id)),
     [items, dismissed],
@@ -72,6 +85,7 @@ export function PendingRatingsSection() {
   const handleRated = (eventId: string) => {
     setItems((prev) => prev.filter((item) => item.event_id !== eventId));
     setModalItem(null);
+    notifyRatingSubmitted(eventId);
   };
 
   if (loading || visibleItems.length === 0) {

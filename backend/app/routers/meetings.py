@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -97,6 +97,12 @@ def list_meetings(db: Session = Depends(get_db)) -> MeetingListResponse:
 @router.get("/{meeting_id}", response_model=MeetingDetailResponse)
 def get_meeting(
     meeting_id: str,
+    user_id: str = Query(
+        default=DEFAULT_HOST_USER_ID,
+        min_length=1,
+        max_length=32,
+        description="Dev stub until auth",
+    ),
     db: Session = Depends(get_db),
 ) -> MeetingDetailResponse:
     meeting = _get_meeting_or_404(db, meeting_id)
@@ -118,7 +124,12 @@ def get_meeting(
         upcoming_only=True,
         limit=5,
     )
-    upcoming_events = event_rows_to_summaries(db, upcoming_rows)
+    upcoming_events = event_rows_to_summaries(
+        db,
+        upcoming_rows,
+        meeting_id=meeting_id,
+        user_id=user_id.strip(),
+    )
 
     host_user = db.get(User, meeting.host_user_id)
     post_count = (
