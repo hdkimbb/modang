@@ -19,6 +19,7 @@ from app.schemas.owner import (
     OwnerCategoryInsight,
     OwnerDashboardResponse,
     OwnerDashboardStats,
+    OwnerMentionStats,
     OwnerInsightsResponse,
     OwnerMeetingVisit,
     OwnerMessageResponse,
@@ -106,6 +107,40 @@ def _month_bounds(now: datetime) -> tuple[datetime, datetime]:
     else:
         end_local = start_local.replace(month=start_local.month + 1)
     return start_local.astimezone(timezone.utc), end_local.astimezone(timezone.utc)
+
+
+def _count_mention_stats(
+    db: Session,
+    place_id: str,
+    month_start: datetime,
+    month_end: datetime,
+) -> OwnerMentionStats:
+    base = (
+        PlaceSignal.place_id == place_id,
+        PlaceSignal.signal_type == "mentioned",
+        PlaceSignal.is_void.is_(False),
+    )
+    total = (
+        db.scalar(
+            select(func.count())
+            .select_from(PlaceSignal)
+            .where(*base),
+        )
+        or 0
+    )
+    this_month = (
+        db.scalar(
+            select(func.count())
+            .select_from(PlaceSignal)
+            .where(
+                *base,
+                PlaceSignal.occurred_at >= month_start,
+                PlaceSignal.occurred_at < month_end,
+            ),
+        )
+        or 0
+    )
+    return OwnerMentionStats(total=total, this_month=this_month)
 
 
 def _count_signals_for_meeting(
@@ -231,6 +266,7 @@ def get_owner_dashboard(
         None,
     )
     score_breakdown = calculate_place_score(db, place_id)
+    mention_stats = _count_mention_stats(db, place_id, month_start, month_end)
 
     return OwnerDashboardResponse(
         place=OwnerPlaceSummary(
@@ -245,6 +281,7 @@ def get_owner_dashboard(
             this_month_visits=this_month_visits,
             upcoming_count=upcoming_count,
         ),
+        mention_stats=mention_stats,
         meetings=visit_rows,
         ranking=OwnerRankingSummary(
             district=place.district,

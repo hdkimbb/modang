@@ -2,17 +2,24 @@
 
 import { Clock, Lightbulb } from "lucide-react";
 
-import type { OwnerInsights, OwnerTimeslotInsights } from "@/lib/types/owner";
+import { OwnerMentionCard } from "@/components/owner/OwnerMentionCard";
+import type {
+  OwnerInsights,
+  OwnerMentionStats,
+  OwnerTimeslotInsights,
+} from "@/lib/types/owner";
 
 type InsightsTabProps = {
   insights: OwnerInsights | null;
   timeslots: OwnerTimeslotInsights | null;
+  mentionStats: OwnerMentionStats;
   onApplyMessageTemplate: (template: string) => void;
 };
 
 export function InsightsTab({
   insights,
   timeslots,
+  mentionStats,
   onApplyMessageTemplate,
 }: InsightsTabProps) {
   return (
@@ -124,6 +131,8 @@ export function InsightsTab({
           </>
         )}
       </section>
+
+      <OwnerMentionCard stats={mentionStats} />
     </div>
   );
 }

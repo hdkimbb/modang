@@ -41,12 +41,6 @@ export function RankingListItem({ item }: RankingListItemProps) {
             <span className="font-semibold text-gray-900">
               {score.total.toFixed(1)}점
             </span>
-            {score.mention > 0 ? (
-              <>
-                <span className="text-gray-400"> · </span>
-                멘션 {score.mention.toFixed(1)}
-              </>
-            ) : null}
             <span className="text-gray-400"> · </span>
             모임 {stats.total_meetings_30d}건
             {stats.avg_rating != null ? (

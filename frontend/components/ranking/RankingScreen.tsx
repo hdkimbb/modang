@@ -120,7 +120,8 @@ export function RankingScreen() {
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
         {data ? (
           <p className="mb-4 text-sm text-gray-500">
-            {data.season_label} 시즌 (실시간)
+            {data.season_label} 시즌{" "}
+            {data.season_status === "active" ? "(실시간)" : "마감"}
           </p>
         ) : null}
 

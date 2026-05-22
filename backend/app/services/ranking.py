@@ -10,28 +10,28 @@ from sqlalchemy.orm import Session
 from app.models.meeting_event import MeetingEvent
 from app.models.meeting_rating import MeetingRating
 from app.models.place import Place
+from app.models.season import Season
 from app.services.place_scoring import calculate_place_score
 
-KST = timezone(timedelta(hours=9))
 
+def resolve_ranking_season(db: Session) -> tuple[str, str]:
+    """Return (season name, status) from seasons table for ranking header."""
+    active = db.scalars(
+        select(Season)
+        .where(Season.status == "active")
+        .order_by(Season.starts_at.desc())
+        .limit(1),
+    ).first()
+    if active is not None:
+        return active.name, active.status
 
-def current_season_label(now: datetime | None = None) -> str:
-    ref = now or datetime.now(KST)
-    if ref.tzinfo is None:
-        ref = ref.replace(tzinfo=KST)
-    else:
-        ref = ref.astimezone(KST)
-    month = ref.month
-    year = ref.year
-    if month in (3, 4, 5):
-        season = "Spring"
-    elif month in (6, 7, 8):
-        season = "Summer"
-    elif month in (9, 10, 11):
-        season = "Fall"
-    else:
-        season = "Winter"
-    return f"{season} {year}"
+    latest = db.scalars(
+        select(Season).order_by(Season.ends_at.desc()).limit(1),
+    ).first()
+    if latest is not None:
+        return latest.name, latest.status
+
+    return "시즌", "active"
 
 
 def fetch_ranking_districts(db: Session) -> list[str]:

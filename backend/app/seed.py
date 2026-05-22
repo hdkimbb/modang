@@ -405,6 +405,26 @@ MEETING_POST_COMMENTS = [
         "minutes_ago": 10,
         "signal": True,
     },
+    {
+        "id": "mpcm_004",
+        "post_id": "mpst_001",
+        "author_user_id": "u_002",
+        "content": "다음 모임은 @스타벅스 강남점 에서 할까요?",
+        "mention_places": ["plc_001"],
+        "mention_users": [],
+        "minutes_ago": 120,
+        "signal": True,
+    },
+    {
+        "id": "mpcm_005",
+        "post_id": "mpst_002",
+        "author_user_id": "u_003",
+        "content": "지난번 @스타벅스 강남점 분위기 좋았어요",
+        "mention_places": ["plc_001"],
+        "mention_users": [],
+        "minutes_ago": 60 * 24 * 50,
+        "signal": True,
+    },
 ]
 
 

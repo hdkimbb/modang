@@ -30,6 +30,7 @@ class RankingResponse(BaseModel):
     district: str
     category: str
     season_label: str
+    season_status: str
     items: list[RankingItem]
 
 

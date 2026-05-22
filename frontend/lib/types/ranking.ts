@@ -42,5 +42,6 @@ export interface RankingResponseApi {
   district: string;
   category: string;
   season_label: string;
+  season_status: string;
   items: RankingItemApi[];
 }

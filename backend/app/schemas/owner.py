@@ -25,6 +25,11 @@ class OwnerDashboardStats(BaseModel):
     upcoming_count: int
 
 
+class OwnerMentionStats(BaseModel):
+    total: int
+    this_month: int
+
+
 class OwnerMeetingVisit(BaseModel):
     meeting_id: str
     name: str
@@ -38,6 +43,7 @@ class OwnerMeetingVisit(BaseModel):
 class OwnerDashboardResponse(BaseModel):
     place: OwnerPlaceSummary
     stats: OwnerDashboardStats
+    mention_stats: OwnerMentionStats
     meetings: list[OwnerMeetingVisit]
     ranking: OwnerRankingSummary | None = None
 

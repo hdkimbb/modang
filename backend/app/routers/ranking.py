@@ -15,10 +15,10 @@ from app.schemas.ranking import (
     RankingScoreBreakdown,
 )
 from app.services.ranking import (
-    current_season_label,
     fetch_ranking,
     fetch_ranking_categories,
     fetch_ranking_districts,
+    resolve_ranking_season,
 )
 
 router = APIRouter(prefix="/api/v1/ranking", tags=["ranking"])
@@ -39,6 +39,7 @@ def get_ranking(
     limit: Annotated[int, Query(ge=1, le=50)] = 10,
     db: Session = Depends(get_db),
 ) -> RankingResponse:
+    season_label, season_status = resolve_ranking_season(db)
     rows = fetch_ranking(db, district.strip(), category.strip(), limit=limit)
     items = [
         RankingItem(
@@ -64,6 +65,7 @@ def get_ranking(
     return RankingResponse(
         district=district.strip(),
         category=category.strip(),
-        season_label=current_season_label(),
+        season_label=season_label,
+        season_status=season_status,
         items=items,
     )

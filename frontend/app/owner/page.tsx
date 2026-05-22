@@ -312,6 +312,7 @@ function OwnerDashboardContent() {
         <InsightsTab
           insights={insights}
           timeslots={timeslots}
+          mentionStats={data.mention_stats}
           onApplyMessageTemplate={handleApplyMessageTemplate}
         />
       ) : null}

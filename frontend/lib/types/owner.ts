@@ -8,6 +8,11 @@ export type OwnerRankingSummary = {
   listed_count: number;
 };
 
+export type OwnerMentionStats = {
+  total: number;
+  this_month: number;
+};
+
 export type OwnerDashboard = {
   place: {
     id: string;
@@ -21,6 +26,7 @@ export type OwnerDashboard = {
     this_month_visits: number;
     upcoming_count: number;
   };
+  mention_stats: OwnerMentionStats;
   meetings: OwnerMeetingVisit[];
   ranking: OwnerRankingSummary | null;
 };
