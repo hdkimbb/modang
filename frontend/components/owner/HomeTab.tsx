@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { OwnerAwardsCard } from "@/components/owner/OwnerAwardsCard";
 import {
   OWNER_FILTER_EMPTY_MESSAGE,
   type OwnerMeetingFilter,
@@ -52,6 +53,8 @@ export function HomeTab({
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
+      <OwnerAwardsCard placeId={data.place.id} />
+
       {ranking && ranking.rank != null ? (
         <section className="px-4 pt-4">
           <Link

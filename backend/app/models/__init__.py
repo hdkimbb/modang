@@ -1,3 +1,4 @@
+from app.models.award import Award
 from app.models.base import Base, ModelBase, TimestampMixin
 from app.models.meeting import Meeting
 from app.models.meeting_event import MeetingEvent
@@ -7,7 +8,9 @@ from app.models.meeting_post import MeetingPost
 from app.models.meeting_post_comment import MeetingPostComment
 from app.models.place import Place
 from app.models.place_recommendation_target import PlaceRecommendationTarget
+from app.models.place_score_snapshot import PlaceScoreSnapshot
 from app.models.place_signal import PlaceSignal
+from app.models.season import Season
 from app.models.user import User
 
 __all__ = [
@@ -17,7 +20,10 @@ __all__ = [
     "User",
     "Place",
     "PlaceRecommendationTarget",
+    "PlaceScoreSnapshot",
     "PlaceSignal",
+    "Season",
+    "Award",
     "Meeting",
     "MeetingMember",
     "MeetingEvent",

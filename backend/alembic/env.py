@@ -5,13 +5,18 @@ from sqlalchemy import engine_from_config, pool
 
 from app.config import get_settings
 from app.models import (  # noqa: F401
+    Award,
     Meeting,
     MeetingEvent,
     MeetingRating,
     MeetingMember,
+    MeetingPost,
+    MeetingPostComment,
     Place,
     PlaceRecommendationTarget,
+    PlaceScoreSnapshot,
     PlaceSignal,
+    Season,
     User,
 )
 from app.models.base import Base

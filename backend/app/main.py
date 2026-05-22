@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.routers import (
+    awards,
     meeting_events,
     meeting_post_comments,
     meeting_posts,
@@ -40,6 +41,7 @@ app.include_router(meeting_events.router)
 app.include_router(owner.router)
 app.include_router(ratings.router)
 app.include_router(ranking.router)
+app.include_router(awards.router)
 app.include_router(users.router)
 
 

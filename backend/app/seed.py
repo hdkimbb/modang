@@ -12,6 +12,7 @@ from sqlalchemy import delete, func, select
 
 from app.db import SessionLocal
 from app.models import (
+    Award,
     Meeting,
     MeetingEvent,
     MeetingMember,
@@ -20,9 +21,12 @@ from app.models import (
     MeetingRating,
     Place,
     PlaceRecommendationTarget,
+    PlaceScoreSnapshot,
     PlaceSignal,
+    Season,
     User,
 )
+from app.services.award_service import calculate_and_award_season
 from app.services.id import generate_id
 
 USER_IDS = ["u_001", "u_002", "u_003", "u_004", "u_005"]
@@ -273,6 +277,35 @@ SEASON_END = datetime(2026, 5, 31, 23, 59, 59, tzinfo=timezone.utc)
 KST = timezone(timedelta(hours=9))
 SEED_REFERENCE_NOW = datetime(2026, 5, 21, 12, 0, tzinfo=KST)
 
+SEASONS = [
+    {
+        "id": "season_2025_q4",
+        "name": "2025년 4분기",
+        "starts_at": datetime(2025, 10, 1, 0, 0, 0, tzinfo=KST),
+        "ends_at": datetime(2025, 12, 31, 23, 59, 59, tzinfo=KST),
+        "status": "ended",
+    },
+    {
+        "id": "season_2026_q1",
+        "name": "2026년 1분기",
+        "starts_at": datetime(2026, 1, 1, 0, 0, 0, tzinfo=KST),
+        "ends_at": datetime(2026, 3, 31, 23, 59, 59, tzinfo=KST),
+        "status": "ended",
+    },
+    {
+        "id": "season_2026_q2",
+        "name": "2026년 2분기",
+        "starts_at": datetime(2026, 4, 1, 0, 0, 0, tzinfo=KST),
+        "ends_at": datetime(2026, 6, 30, 23, 59, 59, tzinfo=KST),
+        "status": "active",
+    },
+]
+
+Q1_2026_START = datetime(2026, 1, 1, 0, 0, 0, tzinfo=KST)
+Q1_2026_END = datetime(2026, 3, 31, 23, 59, 59, tzinfo=KST)
+Q4_2025_START = datetime(2025, 10, 1, 0, 0, 0, tzinfo=KST)
+Q4_2025_END = datetime(2025, 12, 31, 23, 59, 59, tzinfo=KST)
+
 MEETING_POSTS = [
     {
         "id": "mpst_001",
@@ -388,16 +421,27 @@ def _random_occurred_at() -> datetime:
     return SEASON_START + timedelta(seconds=offset)
 
 
+def _random_occurred_in_range(start: datetime, end: datetime) -> datetime:
+    delta_seconds = int((end - start).total_seconds())
+    offset = random.randint(0, max(delta_seconds, 0))
+    return start + timedelta(seconds=offset)
+
+
 def _build_signals_for_place(
     place: dict,
     count: int,
 ) -> list[PlaceSignal]:
     signals: list[PlaceSignal] = []
+    use_q1_window = place["id"] == "plc_001"
 
     for i in range(count):
         signal_type = "selected"
         weight = 1.0
         user_id = random.choice(USER_IDS)
+        if use_q1_window:
+            occurred_at = _random_occurred_in_range(Q1_2026_START, Q1_2026_END)
+        else:
+            occurred_at = _random_occurred_at()
         signals.append(
             PlaceSignal(
                 id=generate_id("sig"),
@@ -406,7 +450,7 @@ def _build_signals_for_place(
                 weight=weight,
                 source_ref=f"evt_{place['id']}_{i + 1:03d}",
                 user_id=user_id,
-                occurred_at=_random_occurred_at(),
+                occurred_at=occurred_at,
                 is_void=False,
                 meta={
                     "district": place["district"],
@@ -419,6 +463,9 @@ def _build_signals_for_place(
 
 
 def clear_all(session) -> None:
+    session.execute(delete(Award))
+    session.execute(delete(PlaceScoreSnapshot))
+    session.execute(delete(Season))
     session.execute(delete(MeetingRating))
     session.execute(delete(MeetingPostComment))
     session.execute(delete(MeetingPost))
@@ -430,6 +477,50 @@ def clear_all(session) -> None:
     session.execute(delete(Place))
     session.execute(delete(User))
     session.flush()
+
+
+def seed_q4_demo_signals(session) -> int:
+    """2025 Q4 awards demo: plc_001 moderate cafe signals."""
+    place = next(p for p in PLACES if p["id"] == "plc_001")
+    created = 0
+    for _ in range(12):
+        session.add(
+            PlaceSignal(
+                id=generate_id("sig"),
+                place_id="plc_001",
+                signal_type="selected",
+                weight=1.0,
+                source_ref=generate_id("evt"),
+                user_id=random.choice(USER_IDS),
+                occurred_at=_random_occurred_in_range(Q4_2025_START, Q4_2025_END),
+                is_void=False,
+                meta={
+                    "district": place["district"],
+                    "category": place["category"],
+                },
+            ),
+        )
+        created += 1
+    return created
+
+
+def seed_seasons(session) -> int:
+    for row in SEASONS:
+        session.add(Season(**row))
+    return len(SEASONS)
+
+
+def seed_season_awards(session) -> None:
+    for row in SEASONS:
+        if row["status"] == "active":
+            print(f"Awards for {row['id']}: skipped (active season)")
+            continue
+        result = calculate_and_award_season(row["id"], session)
+        print(
+            f"Awards for {row['id']}: "
+            f"{result['awards_created']} created, "
+            f"{result['snapshots_created']} snapshots",
+        )
 
 
 def upsert_owner_user(session) -> None:
@@ -721,7 +812,12 @@ def main() -> None:
         posts_count = seed_meeting_posts(session)
         session.flush()
         comments_count = seed_meeting_post_comments(session)
+        q4_signals = seed_q4_demo_signals(session)
+        season_count = seed_seasons(session)
+        session.flush()
+        seed_season_awards(session)
         session.commit()
+        print(f"Seeded {q4_signals} Q4 demo signals, {season_count} seasons with auto-awards")
         print_summary(
             session,
             len(signals),

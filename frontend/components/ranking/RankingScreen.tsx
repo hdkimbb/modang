@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -66,6 +67,14 @@ export function RankingScreen() {
         variant="back"
         title="우리동네 랭킹"
         onAction={() => router.back()}
+        rightSlot={
+          <Link
+            href="/awards"
+            className="text-sm font-medium text-amber-700"
+          >
+            어워드
+          </Link>
+        }
       />
 
       <section className="border-b border-gray-100 px-4 py-3">

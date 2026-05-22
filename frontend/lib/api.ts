@@ -16,6 +16,11 @@ import type {
   MeetingPostListApi,
 } from "@/lib/types/meeting-post";
 import type { Persona, PersonaListApi } from "@/lib/types/persona";
+import type {
+  PlaceAwardsResponseApi,
+  SeasonAwardsResponseApi,
+  SeasonSummaryApi,
+} from "@/lib/types/award";
 import type { RankingResponseApi } from "@/lib/types/ranking";
 import type { UserSearchApi } from "@/lib/types/user";
 import {
@@ -342,6 +347,22 @@ export async function createEventRating(
     );
   }
   return res.json() as Promise<RatingResponse>;
+}
+
+export async function getSeasons(): Promise<SeasonSummaryApi[]> {
+  return fetchApi("/api/v1/seasons");
+}
+
+export async function getSeasonAwards(
+  seasonId: string,
+): Promise<SeasonAwardsResponseApi> {
+  return fetchApi(`/api/v1/seasons/${encodeURIComponent(seasonId)}/awards`);
+}
+
+export async function getPlaceAwards(
+  placeId: string,
+): Promise<PlaceAwardsResponseApi> {
+  return fetchApi(`/api/v1/places/${encodeURIComponent(placeId)}/awards`);
 }
 
 export async function getRanking(
