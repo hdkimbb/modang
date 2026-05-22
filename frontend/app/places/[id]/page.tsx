@@ -152,6 +152,52 @@ function PlaceDetailBody({
         ) : null}
       </section>
 
+      {place.score && place.score.total > 0 ? (
+        <section className="mx-4 mb-4 rounded-2xl border border-gray-200 bg-white p-4">
+          <h2 className="text-base font-bold">동네 신뢰 점수</h2>
+          <p className="mt-1 text-2xl font-bold text-gray-900">
+            {place.score.total.toFixed(1)}
+            <span className="ml-1 text-sm font-normal text-gray-500">점</span>
+          </p>
+          <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-gray-100">
+            {place.score.selected_share_pct > 0 ? (
+              <div
+                className="bg-blue-500"
+                style={{ width: `${place.score.selected_share_pct}%` }}
+                title={`일정 선택 ${place.score.selected_share_pct}%`}
+              />
+            ) : null}
+            {place.score.rated_share_pct > 0 ? (
+              <div
+                className="bg-orange-400"
+                style={{ width: `${place.score.rated_share_pct}%` }}
+                title={`별점 ${place.score.rated_share_pct}%`}
+              />
+            ) : null}
+            {place.score.mentioned_share_pct > 0 ? (
+              <div
+                className="bg-emerald-500"
+                style={{ width: `${place.score.mentioned_share_pct}%` }}
+                title={`멘션 ${place.score.mentioned_share_pct}%`}
+              />
+            ) : null}
+          </div>
+          <ul className="mt-3 space-y-1 text-xs text-gray-600">
+            <li>
+              일정 선택 {place.score.selected.toFixed(1)}점 (
+              {place.score.selected_share_pct}%)
+            </li>
+            <li>
+              별점 {place.score.rated.toFixed(1)}점 ({place.score.rated_share_pct}%)
+            </li>
+            <li>
+              멘션 {place.score.mentioned.toFixed(1)}점 (
+              {place.score.mentioned_share_pct}%)
+            </li>
+          </ul>
+        </section>
+      ) : null}
+
       {place.owner_message ? (
         <p className="mx-4 mb-4 whitespace-pre-wrap rounded-2xl bg-amber-50 p-4 text-sm text-gray-800">
           {place.owner_message}

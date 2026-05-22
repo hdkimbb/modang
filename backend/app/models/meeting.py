@@ -33,3 +33,7 @@ class Meeting(ModelBase):
         "MeetingEvent",
         back_populates="meeting",
     )
+    posts: Mapped[list["MeetingPost"]] = relationship(
+        "MeetingPost",
+        back_populates="meeting",
+    )

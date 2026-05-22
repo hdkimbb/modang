@@ -20,6 +20,12 @@ export interface MeetingEventSummaryApi {
   rating_count: number;
 }
 
+export interface MeetingHostApi {
+  user_id: string;
+  name: string;
+  avatar_url: string | null;
+}
+
 export interface MeetingDetailApi {
   id: string;
   name: string;
@@ -29,6 +35,9 @@ export interface MeetingDetailApi {
   description: string | null;
   member_count: number;
   created_at: string;
+  host: MeetingHostApi;
+  post_count: number;
+  event_count: number;
   members: MeetingMemberApi[];
   upcoming_events: MeetingEventSummaryApi[];
 }

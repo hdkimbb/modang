@@ -31,3 +31,8 @@ class RankingResponse(BaseModel):
     category: str
     season_label: str
     items: list[RankingItem]
+
+
+class RankingFiltersResponse(BaseModel):
+    districts: list[str]
+    categories: list[str]

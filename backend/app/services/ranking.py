@@ -4,19 +4,15 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import case, func, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.meeting_event import MeetingEvent
 from app.models.meeting_rating import MeetingRating
 from app.models.place import Place
-from app.models.place_signal import PlaceSignal
+from app.services.place_scoring import calculate_place_score
 
 KST = timezone(timedelta(hours=9))
-
-MEETUP_SIGNAL_TYPES = ("selected", "rated")
-MENTION_SIGNAL_TYPES = ("mention",)
-REVIEW_SIGNAL_TYPES = ("review",)
 
 
 def current_season_label(now: datetime | None = None) -> str:
@@ -38,6 +34,26 @@ def current_season_label(now: datetime | None = None) -> str:
     return f"{season} {year}"
 
 
+def fetch_ranking_districts(db: Session) -> list[str]:
+    rows = db.scalars(
+        select(Place.district)
+        .where(Place.district.is_not(None))
+        .distinct()
+        .order_by(Place.district.asc()),
+    ).all()
+    return [d for d in rows if d]
+
+
+def fetch_ranking_categories(db: Session) -> list[str]:
+    rows = db.scalars(
+        select(Place.category)
+        .where(Place.category.is_not(None))
+        .distinct()
+        .order_by(Place.category.asc()),
+    ).all()
+    return [c for c in rows if c]
+
+
 def fetch_ranking(
     db: Session,
     district: str,
@@ -47,68 +63,39 @@ def fetch_ranking(
     now = datetime.now(timezone.utc)
     since_30d = now - timedelta(days=30)
 
-    meetup_score = func.coalesce(
-        func.sum(
-            case(
-                (
-                    PlaceSignal.signal_type.in_(MEETUP_SIGNAL_TYPES),
-                    PlaceSignal.weight,
-                ),
-                else_=0.0,
-            ),
-        ),
-        0.0,
-    )
-    mention_score = func.coalesce(
-        func.sum(
-            case(
-                (
-                    PlaceSignal.signal_type.in_(MENTION_SIGNAL_TYPES),
-                    PlaceSignal.weight,
-                ),
-                else_=0.0,
-            ),
-        ),
-        0.0,
-    )
-    review_score = func.coalesce(
-        func.sum(
-            case(
-                (
-                    PlaceSignal.signal_type.in_(REVIEW_SIGNAL_TYPES),
-                    PlaceSignal.weight,
-                ),
-                else_=0.0,
-            ),
-        ),
-        0.0,
-    )
-    total_score = meetup_score + mention_score + review_score
-
-    score_rows = db.execute(
-        select(
-            Place.id,
-            Place.name,
-            meetup_score.label("meetup_signal"),
-            mention_score.label("mention"),
-            review_score.label("review"),
-            total_score.label("total"),
-        )
-        .outerjoin(
-            PlaceSignal,
-            (PlaceSignal.place_id == Place.id) & (PlaceSignal.is_void.is_(False)),
-        )
+    places = db.scalars(
+        select(Place)
         .where(Place.district == district, Place.category == category)
-        .group_by(Place.id, Place.name)
-        .having(total_score > 0)
-        .order_by(total_score.desc(), Place.name.asc())
-        .limit(limit),
+        .order_by(Place.name.asc()),
     ).all()
+
+    scored: list[tuple[Place, dict]] = []
+    for place in places:
+        breakdown = calculate_place_score(db, place.id)
+        if breakdown["total"] <= 0:
+            continue
+        scored.append(
+            (
+                place,
+                {
+                    "meetup_signal": round(
+                        breakdown["selected"] + breakdown["rated"],
+                        1,
+                    ),
+                    "mention": breakdown["mentioned"],
+                    "review": 0.0,
+                    "total": breakdown["total"],
+                },
+            ),
+        )
+
+    scored.sort(key=lambda x: (-x[1]["total"], x[0].name))
+    score_rows = [(p, s) for p, s in scored[:limit]]
 
     if not score_rows:
         return []
 
-    place_ids = [row.id for row in score_rows]
+    place_ids = [place.id for place, _ in score_rows]
 
     meetings_30d = {
         pid: int(cnt)
@@ -137,18 +124,18 @@ def fetch_ranking(
     }
 
     items: list[dict] = []
-    for rank, row in enumerate(score_rows, start=1):
+    for rank, (place, scores) in enumerate(score_rows, start=1):
         items.append(
             {
                 "rank": rank,
-                "place_id": row.id,
-                "name": row.name,
-                "meetup_signal": round(float(row.meetup_signal), 1),
-                "mention": round(float(row.mention), 1),
-                "review": round(float(row.review), 1),
-                "total": round(float(row.total), 1),
-                "total_meetings_30d": meetings_30d.get(row.id, 0),
-                "avg_rating": avg_by_place.get(row.id),
+                "place_id": place.id,
+                "name": place.name,
+                "meetup_signal": scores["meetup_signal"],
+                "mention": scores["mention"],
+                "review": scores["review"],
+                "total": scores["total"],
+                "total_meetings_30d": meetings_30d.get(place.id, 0),
+                "avg_rating": avg_by_place.get(place.id),
             },
         )
     return items

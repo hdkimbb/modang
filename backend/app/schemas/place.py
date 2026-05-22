@@ -30,6 +30,27 @@ class PlaceSearchResponse(BaseModel):
     next_cursor: str | None = None
 
 
+class PlaceQuickSearchItem(BaseModel):
+    place_id: str
+    name: str
+    address: str
+    meeting_count: int = 0
+
+
+class PlaceQuickSearchResponse(BaseModel):
+    items: list[PlaceQuickSearchItem]
+
+
+class PlaceScoreSummary(BaseModel):
+    total: float
+    selected: float
+    rated: float
+    mentioned: float
+    selected_share_pct: int
+    rated_share_pct: int
+    mentioned_share_pct: int
+
+
 class PlaceDetailResponse(BaseModel):
     id: str
     name: str
@@ -43,6 +64,7 @@ class PlaceDetailResponse(BaseModel):
     rating_count: int = 0
     would_revisit_rate: float | None = None
     owner_message: str | None = None
+    score: PlaceScoreSummary | None = None
 
 
 class PlaceMeetingHistoryItem(BaseModel):

@@ -11,3 +11,13 @@ class UserPersonaResponse(BaseModel):
 
 class UserPersonaListResponse(BaseModel):
     items: list[UserPersonaResponse]
+
+
+class UserSearchItem(BaseModel):
+    user_id: str
+    name: str
+    profile_image_url: str | None = None
+
+
+class UserSearchResponse(BaseModel):
+    items: list[UserSearchItem]

@@ -4,8 +4,20 @@ import type {
   MeetingEventsListApi,
   MeetingPlaceHistoryApi,
 } from "@/lib/types/meeting-detail";
+import type {
+  CreateMeetingPostCommentRequest,
+  MeetingPostCommentApi,
+  MeetingPostCommentListApi,
+  PlaceQuickSearchApi,
+} from "@/lib/types/meeting-comment";
+import type {
+  CreateMeetingPostRequest,
+  MeetingPostItemApi,
+  MeetingPostListApi,
+} from "@/lib/types/meeting-post";
 import type { Persona, PersonaListApi } from "@/lib/types/persona";
 import type { RankingResponseApi } from "@/lib/types/ranking";
+import type { UserSearchApi } from "@/lib/types/user";
 import {
   mapPlaceSearchItem,
   type Place,
@@ -139,6 +151,136 @@ export async function getMeetingPlaceHistory(
   meetingId: string,
 ): Promise<MeetingPlaceHistoryApi> {
   return fetchApi(`/api/v1/meetings/${meetingId}/place_history`);
+}
+
+export async function getMeetingPost(
+  meetingId: string,
+  postId: string,
+): Promise<MeetingPostItemApi> {
+  return fetchApi(
+    `/api/v1/meetings/${encodeURIComponent(meetingId)}/posts/${encodeURIComponent(postId)}`,
+  );
+}
+
+export async function getMeetingPosts(
+  meetingId: string,
+  options?: { board_type?: string; limit?: number; offset?: number },
+): Promise<MeetingPostListApi> {
+  const params = new URLSearchParams();
+  if (options?.board_type) params.set("board_type", options.board_type);
+  if (options?.limit != null) params.set("limit", String(options.limit));
+  if (options?.offset != null) params.set("offset", String(options.offset));
+  const qs = params.toString();
+  return fetchApi(
+    `/api/v1/meetings/${meetingId}/posts${qs ? `?${qs}` : ""}`,
+  );
+}
+
+export async function createMeetingPost(
+  meetingId: string,
+  data: CreateMeetingPostRequest,
+): Promise<MeetingPostItemApi> {
+  const url = `${API_BASE}/api/v1/meetings/${encodeURIComponent(meetingId)}/posts`;
+  console.log("[API URL]", url);
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  } catch (e) {
+    const hint =
+      e instanceof TypeError && e.message === "Failed to fetch"
+        ? ` (백엔드 연결 확인: ${API_BASE})`
+        : "";
+    throw new Error(
+      `네트워크 오류로 게시글을 등록하지 못했어요${hint}`,
+      { cause: e },
+    );
+  }
+
+  if (!res.ok) {
+    let message = "게시글 등록에 실패했어요";
+    try {
+      const err = (await res.json()) as {
+        detail?: { error?: { message?: string } };
+      };
+      message = err.detail?.error?.message || message;
+    } catch {
+      message = `${message} (${res.status})`;
+    }
+    throw new Error(message);
+  }
+  return res.json() as Promise<MeetingPostItemApi>;
+}
+
+export async function getPostComments(
+  meetingId: string,
+  postId: string,
+): Promise<MeetingPostCommentListApi> {
+  return fetchApi(
+    `/api/v1/meetings/${encodeURIComponent(meetingId)}/posts/${encodeURIComponent(postId)}/comments`,
+  );
+}
+
+export async function createPostComment(
+  meetingId: string,
+  postId: string,
+  data: CreateMeetingPostCommentRequest,
+): Promise<MeetingPostCommentApi> {
+  const url = `${API_BASE}/api/v1/meetings/${encodeURIComponent(meetingId)}/posts/${encodeURIComponent(postId)}/comments`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    let message = "댓글 등록에 실패했어요";
+    try {
+      const err = (await res.json()) as {
+        detail?: { error?: { message?: string } };
+      };
+      message = err.detail?.error?.message || message;
+    } catch {
+      message = `${message} (${res.status})`;
+    }
+    throw new Error(message);
+  }
+  return res.json() as Promise<MeetingPostCommentApi>;
+}
+
+export async function quickSearchPlaces(
+  q: string,
+  limit = 5,
+): Promise<PlaceQuickSearchApi> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (q.trim()) params.set("q", q.trim());
+  return fetchApi(`/api/v1/places/quick-search?${params.toString()}`);
+}
+
+export async function searchUsers(
+  q: string,
+  limit = 5,
+): Promise<UserSearchApi> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (q.trim()) params.set("q", q.trim());
+  return fetchApi(`/api/v1/users/search?${params.toString()}`);
+}
+
+export async function uploadImage(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch("/api/upload", {
+    method: "POST",
+    body: formData,
+  });
+  const data = (await res.json()) as { url?: string; error?: string };
+  if (!res.ok || !data.url) {
+    throw new Error(data.error || "이미지 업로드에 실패했어요");
+  }
+  return data.url;
 }
 
 export async function getPlaceDetail(placeId: string): Promise<PlaceDetailApi> {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
@@ -15,10 +15,29 @@ import {
 
 import { RankingListItem } from "./RankingListItem";
 
+function parseDistrictParam(value: string | null): RankingDistrictId {
+  if (value && RANKING_DISTRICTS.some((d) => d.id === value)) {
+    return value as RankingDistrictId;
+  }
+  return "성수동";
+}
+
+function parseCategoryParam(value: string | null): RankingCategoryId {
+  if (value && RANKING_CATEGORIES.some((c) => c.id === value)) {
+    return value as RankingCategoryId;
+  }
+  return "cafe";
+}
+
 export function RankingScreen() {
   const router = useRouter();
-  const [district, setDistrict] = useState<RankingDistrictId>("성수동");
-  const [category, setCategory] = useState<RankingCategoryId>("cafe");
+  const searchParams = useSearchParams();
+  const [district, setDistrict] = useState<RankingDistrictId>(() =>
+    parseDistrictParam(searchParams.get("district")),
+  );
+  const [category, setCategory] = useState<RankingCategoryId>(() =>
+    parseCategoryParam(searchParams.get("category")),
+  );
   const [data, setData] = useState<RankingResponseApi | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

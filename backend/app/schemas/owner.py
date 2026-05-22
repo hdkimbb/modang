@@ -7,6 +7,16 @@ class OwnerPlaceSummary(BaseModel):
     id: str
     name: str
     address: str
+    district: str
+    category: str
+
+
+class OwnerRankingSummary(BaseModel):
+    district: str
+    category: str
+    rank: int | None = None
+    score: float = 0.0
+    listed_count: int = 0
 
 
 class OwnerDashboardStats(BaseModel):
@@ -29,6 +39,7 @@ class OwnerDashboardResponse(BaseModel):
     place: OwnerPlaceSummary
     stats: OwnerDashboardStats
     meetings: list[OwnerMeetingVisit]
+    ranking: OwnerRankingSummary | None = None
 
 
 class RecommendedAction(BaseModel):

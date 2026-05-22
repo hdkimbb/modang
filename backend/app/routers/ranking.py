@@ -7,15 +7,29 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.schemas.ranking import (
+    RankingFiltersResponse,
     RankingItem,
     RankingPlaceStats,
     RankingPlaceSummary,
     RankingResponse,
     RankingScoreBreakdown,
 )
-from app.services.ranking import current_season_label, fetch_ranking
+from app.services.ranking import (
+    current_season_label,
+    fetch_ranking,
+    fetch_ranking_categories,
+    fetch_ranking_districts,
+)
 
 router = APIRouter(prefix="/api/v1/ranking", tags=["ranking"])
+
+
+@router.get("/filters", response_model=RankingFiltersResponse)
+def get_ranking_filters(db: Session = Depends(get_db)) -> RankingFiltersResponse:
+    return RankingFiltersResponse(
+        districts=fetch_ranking_districts(db),
+        categories=fetch_ranking_categories(db),
+    )
 
 
 @router.get("", response_model=RankingResponse)

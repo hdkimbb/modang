@@ -24,6 +24,7 @@ from app.schemas.owner import (
     OwnerMessageResponse,
     OwnerMessageUpdateRequest,
     OwnerPlaceSummary,
+    OwnerRankingSummary,
     OwnerRecommendationTargetsResponse,
     OwnerRecommendationTargetsUpdateRequest,
     OwnerTimeslotInsightsResponse,
@@ -31,6 +32,8 @@ from app.schemas.owner import (
     TimeslotInsight,
 )
 from app.services.id import generate_id
+from app.services.place_scoring import calculate_place_score
+from app.services.ranking import fetch_ranking
 from app.services.owner_insights import (
     OWNER_RECOMMENDATION_CATEGORIES,
     category_display_label,
@@ -217,11 +220,25 @@ def get_owner_dashboard(
             ),
         )
 
+    ranking_rows = fetch_ranking(
+        db,
+        place.district,
+        place.category,
+        limit=50,
+    )
+    owner_rank = next(
+        (row["rank"] for row in ranking_rows if row["place_id"] == place_id),
+        None,
+    )
+    score_breakdown = calculate_place_score(db, place_id)
+
     return OwnerDashboardResponse(
         place=OwnerPlaceSummary(
             id=place.id,
             name=place.name,
             address=place.address,
+            district=place.district,
+            category=place.category,
         ),
         stats=OwnerDashboardStats(
             total_visits=total_visits,
@@ -229,6 +246,13 @@ def get_owner_dashboard(
             upcoming_count=upcoming_count,
         ),
         meetings=visit_rows,
+        ranking=OwnerRankingSummary(
+            district=place.district,
+            category=place.category,
+            rank=owner_rank,
+            score=score_breakdown["total"],
+            listed_count=len(ranking_rows),
+        ),
     )
 
 

@@ -21,6 +21,16 @@ export interface PlaceSearchItemApi {
   is_owner_recommended?: boolean;
 }
 
+export interface PlaceScoreSummaryApi {
+  total: number;
+  selected: number;
+  rated: number;
+  mentioned: number;
+  selected_share_pct: number;
+  rated_share_pct: number;
+  mentioned_share_pct: number;
+}
+
 export interface PlaceDetailApi {
   id: string;
   name: string;
@@ -34,6 +44,7 @@ export interface PlaceDetailApi {
   rating_count: number;
   would_revisit_rate: number | null;
   owner_message: string | null;
+  score: PlaceScoreSummaryApi | null;
 }
 
 export interface PlaceRatingsApi {

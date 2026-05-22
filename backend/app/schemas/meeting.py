@@ -52,6 +52,12 @@ class MeetingMemberItem(BaseModel):
     role: str
 
 
+class MeetingHostSummary(BaseModel):
+    user_id: str
+    name: str
+    avatar_url: str | None
+
+
 class MeetingEventPlaceSummary(BaseModel):
     place_id: str
     name: str
@@ -77,6 +83,9 @@ class MeetingDetailResponse(BaseModel):
     description: str | None
     member_count: int
     created_at: datetime
+    host: MeetingHostSummary
+    post_count: int
+    event_count: int
     members: list[MeetingMemberItem]
     upcoming_events: list[MeetingEventSummary]
 

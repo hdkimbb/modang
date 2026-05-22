@@ -1,13 +1,28 @@
 export type OwnerTabId = "home" | "insights" | "tools";
 
+export type OwnerRankingSummary = {
+  district: string;
+  category: string;
+  rank: number | null;
+  score: number;
+  listed_count: number;
+};
+
 export type OwnerDashboard = {
-  place: { id: string; name: string; address: string };
+  place: {
+    id: string;
+    name: string;
+    address: string;
+    district: string;
+    category: string;
+  };
   stats: {
     total_visits: number;
     this_month_visits: number;
     upcoming_count: number;
   };
   meetings: OwnerMeetingVisit[];
+  ranking: OwnerRankingSummary | null;
 };
 
 export type OwnerMeetingVisit = {

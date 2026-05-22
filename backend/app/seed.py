@@ -15,6 +15,8 @@ from app.models import (
     Meeting,
     MeetingEvent,
     MeetingMember,
+    MeetingPost,
+    MeetingPostComment,
     MeetingRating,
     Place,
     PlaceRecommendationTarget,
@@ -268,7 +270,109 @@ SIGNAL_COUNTS: dict[str, int] = {
 
 SEASON_START = datetime(2026, 3, 1, tzinfo=timezone.utc)
 SEASON_END = datetime(2026, 5, 31, 23, 59, 59, tzinfo=timezone.utc)
-SEED_REFERENCE_NOW = datetime(2026, 5, 21, 12, 0, tzinfo=timezone.utc)
+KST = timezone(timedelta(hours=9))
+SEED_REFERENCE_NOW = datetime(2026, 5, 21, 12, 0, tzinfo=KST)
+
+MEETING_POSTS = [
+    {
+        "id": "mpst_001",
+        "meeting_id": "mtg_001",
+        "author_user_id": "u_001",
+        "board_type": "free",
+        "content": "사진도 글도 쓸 수 있어",
+        "image_urls": ["https://picsum.photos/seed/post1/800/600"],
+        "view_count": 7,
+        "like_count": 3,
+        "comment_count": 3,
+        "minutes_ago": 2,
+    },
+    {
+        "id": "mpst_002",
+        "meeting_id": "mtg_001",
+        "author_user_id": "u_002",
+        "board_type": "free",
+        "content": "이번 주 토요일 모임 잘 부탁드려요",
+        "image_urls": None,
+        "view_count": 4,
+        "like_count": 1,
+        "comment_count": 0,
+        "minutes_ago": 180,
+    },
+    {
+        "id": "mpst_003",
+        "meeting_id": "mtg_001",
+        "author_user_id": "u_003",
+        "board_type": "free",
+        "content": "다음 모임은 @성수동 코너 카페 에서 할까요?",
+        "mention_places": ["plc_003"],
+        "mention_users": [],
+        "post_signal": True,
+        "image_urls": ["https://picsum.photos/seed/post2/800/600"],
+        "view_count": 9,
+        "like_count": 5,
+        "comment_count": 1,
+        "minutes_ago": 1440,
+    },
+    {
+        "id": "mpst_004",
+        "meeting_id": "mtg_002",
+        "author_user_id": "u_002",
+        "board_type": "free",
+        "content": "다음 모임 코스 추천",
+        "image_urls": None,
+        "view_count": 3,
+        "like_count": 0,
+        "comment_count": 0,
+        "minutes_ago": 60,
+    },
+    {
+        "id": "mpst_005",
+        "meeting_id": "mtg_002",
+        "author_user_id": "u_005",
+        "board_type": "free",
+        "content": "오늘 @투썸플레이스 성수 에서 만났는데 @준호 님도 오셨으면 좋겠어요",
+        "mention_places": ["plc_005"],
+        "mention_users": ["u_002"],
+        "post_signal": True,
+        "image_urls": ["https://picsum.photos/seed/post3/800/600"],
+        "view_count": 10,
+        "like_count": 4,
+        "comment_count": 2,
+        "minutes_ago": 30,
+    },
+]
+
+MEETING_POST_COMMENTS = [
+    {
+        "id": "mpcm_001",
+        "post_id": "mpst_001",
+        "author_user_id": "u_002",
+        "content": "사진 좋네요!",
+        "mentions": [],
+        "minutes_ago": 1,
+        "signal": False,
+    },
+    {
+        "id": "mpcm_002",
+        "post_id": "mpst_001",
+        "author_user_id": "u_003",
+        "content": "@민지 님 어디서 찍으셨어요?",
+        "mention_places": [],
+        "mention_users": ["u_001"],
+        "minutes_ago": 5,
+        "signal": False,
+    },
+    {
+        "id": "mpcm_003",
+        "post_id": "mpst_001",
+        "author_user_id": "u_004",
+        "content": "장소 추천드려요 @당근카페 역삼점",
+        "mention_places": ["plc_002"],
+        "mention_users": [],
+        "minutes_ago": 10,
+        "signal": True,
+    },
+]
 
 
 def _event_status_for(scheduled_at: datetime) -> str:
@@ -316,6 +420,8 @@ def _build_signals_for_place(
 
 def clear_all(session) -> None:
     session.execute(delete(MeetingRating))
+    session.execute(delete(MeetingPostComment))
+    session.execute(delete(MeetingPost))
     session.execute(delete(MeetingEvent))
     session.execute(delete(MeetingMember))
     session.execute(delete(Meeting))
@@ -423,6 +529,97 @@ def seed_place_visit_events(session) -> int:
     return len(PLACE_VISIT_EVENTS)
 
 
+def seed_meeting_post_comments(session) -> int:
+    meeting = session.get(Meeting, MEETING_ID)
+    for row in MEETING_POST_COMMENTS:
+        created_at = SEED_REFERENCE_NOW - timedelta(minutes=row["minutes_ago"])
+        comment = MeetingPostComment(
+            id=row["id"],
+            post_id=row["post_id"],
+            author_user_id=row["author_user_id"],
+            content=row["content"],
+            created_at=created_at,
+            updated_at=created_at,
+        )
+        comment.mentions = {
+            "places": row.get("mention_places") or row.get("mentions") or [],
+            "users": row.get("mention_users") or [],
+        }
+        session.add(comment)
+
+        place_ids = comment.mention_place_ids
+        if row.get("signal") and place_ids:
+            for place_id in place_ids:
+                place = session.get(Place, place_id)
+                session.add(
+                    PlaceSignal(
+                        id=generate_id("sig"),
+                        place_id=place_id,
+                        signal_type="mentioned",
+                        weight=0.5,
+                        source_ref=row["id"],
+                        user_id=row["author_user_id"],
+                        occurred_at=created_at,
+                        is_void=False,
+                        meta={
+                            "meeting_id": meeting.id if meeting else MEETING_ID,
+                            "post_id": row["post_id"],
+                            "comment_id": row["id"],
+                            "district": place.district if place else None,
+                            "category": meeting.category if meeting else None,
+                        },
+                    ),
+                )
+    return len(MEETING_POST_COMMENTS)
+
+
+def seed_meeting_posts(session) -> int:
+    for row in MEETING_POSTS:
+        created_at = SEED_REFERENCE_NOW - timedelta(minutes=row["minutes_ago"])
+        post = MeetingPost(
+            id=row["id"],
+            meeting_id=row["meeting_id"],
+            author_user_id=row["author_user_id"],
+            board_type=row["board_type"],
+            content=row["content"],
+            view_count=row["view_count"],
+            like_count=row["like_count"],
+            comment_count=row["comment_count"],
+            created_at=created_at,
+            updated_at=created_at,
+        )
+        post.image_urls = row.get("image_urls")
+        post.mentions = {
+            "places": row.get("mention_places") or [],
+            "users": row.get("mention_users") or [],
+        }
+        session.add(post)
+
+        if row.get("post_signal") and post.mention_place_ids:
+            meeting = session.get(Meeting, row["meeting_id"])
+            for place_id in post.mention_place_ids:
+                place = session.get(Place, place_id)
+                session.add(
+                    PlaceSignal(
+                        id=generate_id("sig"),
+                        place_id=place_id,
+                        signal_type="mentioned",
+                        weight=0.5,
+                        source_ref=row["id"],
+                        user_id=row["author_user_id"],
+                        occurred_at=created_at,
+                        is_void=False,
+                        meta={
+                            "meeting_id": row["meeting_id"],
+                            "post_id": row["id"],
+                            "district": place.district if place else None,
+                            "category": meeting.category if meeting else None,
+                        },
+                    ),
+                )
+    return len(MEETING_POSTS)
+
+
 def seed_meeting_ratings(session) -> int:
     ended_events = session.scalars(
         select(MeetingEvent).where(MeetingEvent.status == "ended"),
@@ -480,6 +677,8 @@ def print_summary(
     meeting_count: int,
     event_count: int = 0,
     rating_count: int = 0,
+    post_count: int = 0,
+    comment_count: int = 0,
 ) -> None:
     user_count = session.scalar(select(func.count()).select_from(User)) or 0
     place_count = session.scalar(select(func.count()).select_from(Place)) or 0
@@ -488,7 +687,8 @@ def print_summary(
     print(
         f"Seeded {user_count} users, {place_count} places, "
         f"{signal_count} signals, {meeting_count} meetings ({member_count} members), "
-        f"{event_count} place visit events, {rating_count} ratings",
+        f"{event_count} place visit events, {rating_count} ratings, "
+        f"{post_count} posts, {comment_count} comments",
     )
 
     rows = session.execute(
@@ -518,8 +718,19 @@ def main() -> None:
         events = seed_place_visit_events(session)
         session.flush()
         ratings_count = seed_meeting_ratings(session)
+        posts_count = seed_meeting_posts(session)
+        session.flush()
+        comments_count = seed_meeting_post_comments(session)
         session.commit()
-        print_summary(session, len(signals), meetings, events, ratings_count)
+        print_summary(
+            session,
+            len(signals),
+            meetings,
+            events,
+            ratings_count,
+            posts_count,
+            comments_count,
+        )
     except Exception:
         session.rollback()
         raise

@@ -23,9 +23,14 @@ from app.schemas.place import (
     PlaceDetailResponse,
     PlaceMeetingHistoryItem,
     PlaceMeetingHistoryResponse,
+    PlaceQuickSearchItem,
+    PlaceQuickSearchResponse,
+    PlaceScoreSummary,
     PlaceSearchItem,
     PlaceSearchResponse,
 )
+from app.schemas.place_score import PlaceScoreBreakdown, PlaceScoreResponse
+from app.services.place_scoring import calculate_place_score
 from app.schemas.rating import PlaceRatingsResponse, RecentRatingItem
 from app.services.kakao import KakaoApiError, parse_document, search_keyword
 from app.services.owner_insights import meeting_category_match_labels
@@ -34,6 +39,48 @@ from app.services.place_stats import fetch_place_stats_map, stats_for_place
 router = APIRouter(prefix="/api/v1/places", tags=["places"])
 
 DISTRICT_PATTERN = re.compile(r"([가-힣]+동)")
+
+
+@router.get("/quick-search", response_model=PlaceQuickSearchResponse)
+def quick_search_places(
+    q: str = Query(default="", max_length=100),
+    limit: int = Query(default=5, ge=1, le=10),
+    db: Session = Depends(get_db),
+) -> PlaceQuickSearchResponse:
+    """Lightweight place name search for @ mention autocomplete."""
+    meeting_counts = {
+        pid: int(cnt)
+        for pid, cnt in db.execute(
+            select(
+                MeetingEvent.place_id,
+                func.count(func.distinct(MeetingEvent.meeting_id)),
+            ).group_by(MeetingEvent.place_id),
+        ).all()
+    }
+
+    stmt = select(Place)
+    term = q.strip()
+    if term:
+        pattern = f"%{term}%"
+        stmt = stmt.where(Place.name.like(pattern))
+
+    places = db.scalars(stmt).all()
+    places.sort(
+        key=lambda p: (meeting_counts.get(p.id, 0), p.name),
+        reverse=True,
+    )
+    top = places[:limit]
+
+    items = [
+        PlaceQuickSearchItem(
+            place_id=p.id,
+            name=p.name,
+            address=p.address,
+            meeting_count=int(meeting_counts.get(p.id, 0)),
+        )
+        for p in top
+    ]
+    return PlaceQuickSearchResponse(items=items)
 
 
 def extract_district(address: str) -> str | None:
@@ -415,6 +462,35 @@ def place_meeting_history(
     return PlaceMeetingHistoryResponse(items=items)
 
 
+def _place_score_summary(db: Session, place_id: str) -> PlaceScoreSummary:
+    breakdown = calculate_place_score(db, place_id)
+    return PlaceScoreSummary(**breakdown)
+
+
+@router.get("/{place_id}/score", response_model=PlaceScoreResponse)
+def get_place_score(
+    place_id: str,
+    db: Session = Depends(get_db),
+) -> PlaceScoreResponse:
+    place = db.get(Place, place_id)
+    if place is None:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": {
+                    "code": "place_not_found",
+                    "message": "장소를 찾을 수 없어요.",
+                    "details": {},
+                }
+            },
+        )
+    breakdown = calculate_place_score(db, place_id)
+    return PlaceScoreResponse(
+        place_id=place_id,
+        score=PlaceScoreBreakdown(**breakdown),
+    )
+
+
 @router.get("/{place_id}", response_model=PlaceDetailResponse)
 def get_place_detail(
     place_id: str,
@@ -448,4 +524,5 @@ def get_place_detail(
         rating_count=int(st.get("rating_count", 0)),
         would_revisit_rate=st.get("would_revisit_rate"),
         owner_message=_owner_message_for_place(place),
+        score=_place_score_summary(db, place_id),
     )

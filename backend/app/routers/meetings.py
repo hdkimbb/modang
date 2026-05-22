@@ -10,6 +10,7 @@ from app.db import get_db
 from app.models.meeting import Meeting
 from app.models.meeting_event import MeetingEvent
 from app.models.meeting_member import MeetingMember
+from app.models.meeting_post import MeetingPost
 from app.models.meeting_rating import MeetingRating
 from app.models.place import Place
 from app.models.user import User
@@ -17,6 +18,7 @@ from app.schemas.meeting import (
     ALLOWED_MEETING_CATEGORIES,
     MeetingCreateRequest,
     MeetingDetailResponse,
+    MeetingHostSummary,
     MeetingListResponse,
     MeetingMemberItem,
     MeetingPlaceHistoryResponse,
@@ -118,6 +120,27 @@ def get_meeting(
     )
     upcoming_events = event_rows_to_summaries(db, upcoming_rows)
 
+    host_user = db.get(User, meeting.host_user_id)
+    post_count = (
+        db.scalar(
+            select(func.count())
+            .select_from(MeetingPost)
+            .where(MeetingPost.meeting_id == meeting_id),
+        )
+        or 0
+    )
+    event_count = (
+        db.scalar(
+            select(func.count())
+            .select_from(MeetingEvent)
+            .where(
+                MeetingEvent.meeting_id == meeting_id,
+                MeetingEvent.status == "scheduled",
+            ),
+        )
+        or 0
+    )
+
     return MeetingDetailResponse(
         id=meeting.id,
         name=meeting.name,
@@ -127,6 +150,13 @@ def get_meeting(
         description=meeting.description,
         member_count=meeting.member_count,
         created_at=meeting.created_at,
+        host=MeetingHostSummary(
+            user_id=meeting.host_user_id,
+            name=host_user.name if host_user else "",
+            avatar_url=host_user.avatar_url if host_user else None,
+        ),
+        post_count=int(post_count),
+        event_count=int(event_count),
         members=members,
         upcoming_events=upcoming_events,
     )

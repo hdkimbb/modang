@@ -3,6 +3,8 @@ from app.models.meeting import Meeting
 from app.models.meeting_event import MeetingEvent
 from app.models.meeting_rating import MeetingRating
 from app.models.meeting_member import MeetingMember
+from app.models.meeting_post import MeetingPost
+from app.models.meeting_post_comment import MeetingPostComment
 from app.models.place import Place
 from app.models.place_recommendation_target import PlaceRecommendationTarget
 from app.models.place_signal import PlaceSignal
@@ -20,4 +22,6 @@ __all__ = [
     "MeetingMember",
     "MeetingEvent",
     "MeetingRating",
+    "MeetingPost",
+    "MeetingPostComment",
 ]

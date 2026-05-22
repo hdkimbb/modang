@@ -15,6 +15,10 @@ export const RANKING_CATEGORIES: { id: RankingCategoryId; label: string }[] = [
   { id: "study_room", label: "스터디룸" },
 ];
 
+export function rankingCategoryLabel(categoryId: string): string {
+  return RANKING_CATEGORIES.find((c) => c.id === categoryId)?.label ?? categoryId;
+}
+
 export interface RankingItemApi {
   rank: number;
   place: {

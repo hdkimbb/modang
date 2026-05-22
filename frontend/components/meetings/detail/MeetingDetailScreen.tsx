@@ -1,99 +1,76 @@
 "use client";
 
-import { MapPin, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  ChevronRight,
+  Flame,
+  Hash,
+  Menu,
+  MessageCircle,
+  Pencil,
+  Search,
+  Users,
+} from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { ScreenHeader } from "@/components/layout/ScreenHeader";
-import { RatingModal } from "@/components/meetings/RatingModal";
-import {
-  getMeetingDetail,
-  getMeetingEvents,
-  getMeetingPlaceHistory,
-} from "@/lib/api";
-import { formatMeetingSchedule } from "@/lib/format-meeting-datetime";
+import { PostActionSheet } from "@/components/meetings/PostActionSheet";
+import { getMeetingDetail, getMeetingPosts } from "@/lib/api";
 import { resolveApiMeetingId } from "@/lib/resolve-meeting-id";
-import {
-  DEFAULT_MEETING_THUMBNAIL,
-} from "@/lib/types/meeting-list";
-import type {
-  MeetingDetailApi,
-  MeetingDetailTab,
-  MeetingEventSummaryApi,
-  PlaceHistoryItemApi,
-} from "@/lib/types/meeting-detail";
+import { DEFAULT_MEETING_THUMBNAIL } from "@/lib/types/meeting-list";
+import type { MeetingDetailApi } from "@/lib/types/meeting-detail";
+import type { MeetingPostItemApi } from "@/lib/types/meeting-post";
 
-import { MeetingEventCard } from "./MeetingEventCard";
+import { MeetingPostCard } from "./MeetingPostCard";
 
-const TABS: { id: MeetingDetailTab; label: string }[] = [
-  { id: "schedule", label: "일정" },
-  { id: "places", label: "장소 이력" },
-];
+type BoardFilter = "all" | "free";
 
 interface MeetingDetailScreenProps {
   routeMeetingId: string;
 }
 
+const ACTION_ITEMS = [
+  { id: "schedule", label: "일정", icon: Calendar, href: "events/new" },
+  { id: "challenge", label: "챌린지", icon: Flame, alert: "준비 중" },
+  { id: "chat", label: "채팅", icon: MessageCircle, alert: "준비 중" },
+  { id: "members", label: "멤버", icon: Users, alert: "준비 중" },
+] as const;
+
 export function MeetingDetailScreen({ routeMeetingId }: MeetingDetailScreenProps) {
   const router = useRouter();
   const apiMeetingId = resolveApiMeetingId(routeMeetingId);
 
-  const [tab, setTab] = useState<MeetingDetailTab>("schedule");
   const [detail, setDetail] = useState<MeetingDetailApi | null>(null);
-  const [events, setEvents] = useState<MeetingEventSummaryApi[]>([]);
-  const [placeHistory, setPlaceHistory] = useState<PlaceHistoryItemApi[]>([]);
+  const [posts, setPosts] = useState<MeetingPostItemApi[]>([]);
+  const [total, setTotal] = useState(0);
+  const [boardFilter, setBoardFilter] = useState<BoardFilter>("all");
   const [loading, setLoading] = useState(true);
-  const [ratingEvent, setRatingEvent] = useState<MeetingEventSummaryApi | null>(
-    null,
-  );
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [detailData, eventsData, historyData] = await Promise.all([
+      const [detailData, postsData] = await Promise.all([
         getMeetingDetail(apiMeetingId),
-        getMeetingEvents(apiMeetingId),
-        getMeetingPlaceHistory(apiMeetingId),
+        getMeetingPosts(apiMeetingId, {
+          board_type: boardFilter === "free" ? "free" : undefined,
+        }),
       ]);
       setDetail(detailData);
-      setEvents(eventsData.items);
-      setPlaceHistory(historyData.items);
+      setPosts(postsData.items);
+      setTotal(postsData.total);
     } catch {
       alert("모임 정보를 불러오지 못했어요");
     } finally {
       setLoading(false);
     }
-  }, [apiMeetingId]);
+  }, [apiMeetingId, boardFilter]);
 
   useEffect(() => {
     void load();
   }, [load]);
-
-  const now = Date.now();
-  const { upcoming, past } = useMemo(() => {
-    const up: MeetingEventSummaryApi[] = [];
-    const pa: MeetingEventSummaryApi[] = [];
-    for (const ev of events) {
-      const isFuture =
-        ev.status === "scheduled" && new Date(ev.scheduled_at).getTime() >= now;
-      if (isFuture) {
-        up.push(ev);
-      } else {
-        pa.push(ev);
-      }
-    }
-    up.sort(
-      (a, b) =>
-        new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime(),
-    );
-    pa.sort(
-      (a, b) =>
-        new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime(),
-    );
-    return { upcoming: up, past: pa };
-  }, [events, now]);
 
   if (loading) {
     return (
@@ -112,167 +89,172 @@ export function MeetingDetailScreen({ routeMeetingId }: MeetingDetailScreenProps
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col pb-24">
-      <ScreenHeader
-        variant="back"
-        title={detail.name}
-        onAction={() => router.back()}
-      />
-
-      <section className="border-b border-gray-100 px-4 py-4">
-        <div className="flex gap-3.5">
-          <Image
-            src={DEFAULT_MEETING_THUMBNAIL}
-            alt=""
-            width={60}
-            height={60}
-            className="h-[60px] w-[60px] shrink-0 rounded-2xl bg-gray-100 object-cover"
-          />
-          <div className="min-w-0 flex-1">
-            <h1 className="text-lg font-bold text-gray-900">{detail.name}</h1>
-            <p className="mt-1 text-sm text-gray-600">{detail.category}</p>
-            <p className="mt-1.5 flex flex-wrap items-center gap-1 text-sm text-gray-600">
-              <span className="inline-flex items-center gap-0.5">
-                <MapPin size={14} className="text-gray-400" aria-hidden />
-                {detail.neighborhood}
-              </span>
-              <span className="text-gray-400" aria-hidden>
-                ·
-              </span>
-              <span className="inline-flex items-center gap-0.5">
-                <Users size={14} className="text-gray-400" aria-hidden />
-                멤버 {detail.member_count}명
-              </span>
-            </p>
-          </div>
+    <div className="relative min-h-dvh w-full bg-white pb-28">
+      <header className="sticky top-0 z-10 flex items-center justify-between bg-white px-4 py-3">
+        <button
+          type="button"
+          aria-label="뒤로"
+          onClick={() => router.back()}
+          className="p-1 text-gray-900"
+        >
+          <ArrowLeft size={24} />
+        </button>
+        <div className="flex items-center gap-3 text-gray-900">
+          <button type="button" aria-label="채팅" className="p-1">
+            <MessageCircle size={24} />
+          </button>
+          <button type="button" aria-label="검색" className="p-1">
+            <Search size={24} />
+          </button>
+          <button type="button" aria-label="메뉴" className="p-1">
+            <Menu size={24} />
+          </button>
         </div>
-        {detail.description ? (
-          <p className="mt-3 whitespace-pre-wrap text-sm text-gray-600">
-            {detail.description}
+      </header>
+
+      <section className="flex items-center gap-3 px-4 py-3">
+        <Image
+          src={DEFAULT_MEETING_THUMBNAIL}
+          alt=""
+          width={80}
+          height={80}
+          className="h-20 w-20 shrink-0 rounded-2xl bg-orange-50 object-cover"
+        />
+        <div className="min-w-0 flex-1">
+          <button
+            type="button"
+            className="flex w-full items-center gap-1 text-left"
+            onClick={() => alert("준비 중")}
+          >
+            <h1 className="truncate text-lg font-bold text-gray-900">
+              {detail.name}
+            </h1>
+            <ChevronRight size={20} className="shrink-0 text-gray-400" />
+          </button>
+          <p className="mt-0.5 text-sm text-gray-500">
+            {detail.neighborhood} · 멤버 {detail.member_count}
           </p>
-        ) : null}
+        </div>
       </section>
 
-      <div className="shrink-0 border-b border-gray-100">
-        <div className="flex">
-          {TABS.map((t) => (
+      <section className="flex justify-around border-b border-gray-100 py-4">
+        {ACTION_ITEMS.map((item) => {
+          const Icon = item.icon;
+          return (
             <button
-              key={t.id}
+              key={item.id}
               type="button"
-              onClick={() => setTab(t.id)}
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                tab === t.id
-                  ? "border-b-2 border-gray-900 text-gray-900"
-                  : "text-gray-500"
-              }`}
+              className="flex flex-col items-center"
+              onClick={() => {
+                if ("href" in item && item.href) {
+                  router.push(`/meetings/${routeMeetingId}/${item.href}`);
+                } else if ("alert" in item && item.alert) {
+                  alert(item.alert);
+                }
+              }}
             >
-              {t.label}
+              <Icon size={28} className="text-gray-700" aria-hidden />
+              <span className="mt-1 text-xs text-gray-700">{item.label}</span>
             </button>
+          );
+        })}
+      </section>
+
+      <section className="mx-4 my-4">
+        <div className="flex items-center gap-3 rounded-xl bg-blue-50 p-4">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100">
+            <Hash size={20} className="text-blue-600" aria-hidden />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm text-gray-700">
+              멤버들이 서로를 더 쉽게 알아볼 수 있어요
+            </p>
+            <p className="text-sm font-medium text-gray-900">
+              멤버 태그 사용하기
+            </p>
+          </div>
+          <ChevronRight size={20} className="shrink-0 text-gray-400" />
+        </div>
+        <div className="mt-3 flex justify-center gap-1.5">
+          {[0, 1, 2, 3].map((i) => (
+            <span
+              key={i}
+              className={`h-1.5 w-1.5 rounded-full ${
+                i === 0 ? "bg-orange-500" : "bg-gray-300"
+              }`}
+            />
           ))}
         </div>
-      </div>
+      </section>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-        {tab === "schedule" ? (
-          <div className="space-y-6">
-            <section>
-              <h2 className="mb-3 text-sm font-bold text-gray-900">
-                다가올 일정
-              </h2>
-              {upcoming.length > 0 ? (
-                <ul className="space-y-3">
-                  {upcoming.map((ev) => (
-                    <li key={ev.event_id}>
-                      <MeetingEventCard event={ev} />
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="rounded-xl bg-gray-50 py-8 text-center text-sm text-gray-400">
-                  예정된 일정이 없어요
-                </p>
-              )}
-            </section>
+      <section className="px-4">
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          <button
+            type="button"
+            onClick={() => setBoardFilter("all")}
+            className={`shrink-0 rounded-full px-4 py-1.5 text-sm ${
+              boardFilter === "all"
+                ? "bg-gray-900 text-white"
+                : "border border-gray-200 text-gray-700"
+            }`}
+          >
+            전체 {detail.post_count || total}
+          </button>
+          <button
+            type="button"
+            onClick={() => setBoardFilter("free")}
+            className={`shrink-0 rounded-full px-4 py-1.5 text-sm ${
+              boardFilter === "free"
+                ? "bg-gray-900 text-white"
+                : "border border-gray-200 text-gray-700"
+            }`}
+          >
+            자유 게시판
+          </button>
+          <button
+            type="button"
+            onClick={() => alert("준비 중")}
+            className="shrink-0 rounded-full border border-gray-200 px-4 py-1.5 text-sm text-gray-700"
+          >
+            + 추가
+          </button>
+        </div>
+        <label className="mt-2 flex items-center gap-2 text-sm text-gray-500">
+          <input type="checkbox" className="rounded-full" disabled />
+          인기순으로 보기
+        </label>
+      </section>
 
-            <section>
-              <h2 className="mb-3 text-sm font-bold text-gray-900">
-                지난 일정
-              </h2>
-              {past.length > 0 ? (
-                <ul className="space-y-3">
-                  {past.map((ev) => (
-                    <li key={ev.event_id}>
-                      <MeetingEventCard
-                        event={ev}
-                        onRate={
-                          ev.status === "ended"
-                            ? () => setRatingEvent(ev)
-                            : undefined
-                        }
-                      />
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="rounded-xl bg-gray-50 py-8 text-center text-sm text-gray-400">
-                  지난 일정이 없어요
-                </p>
-              )}
-            </section>
-          </div>
+      <section>
+        {posts.length > 0 ? (
+          posts.map((post) => (
+            <MeetingPostCard
+              key={post.id}
+              post={post}
+              meetingId={routeMeetingId}
+            />
+          ))
         ) : (
-          <section>
-            {placeHistory.length > 0 ? (
-              <ul className="divide-y divide-gray-100 rounded-xl border border-gray-100 bg-white">
-                {placeHistory.map((item) => (
-                  <li key={item.place.place_id} className="p-4">
-                    <Link
-                      href={`/places/${item.place.place_id}`}
-                      className="font-bold text-gray-900 hover:text-orange-600"
-                    >
-                      {item.place.name}
-                    </Link>
-                    <p className="mt-1 text-sm text-gray-500">
-                      {item.visit_count}회 방문 · 마지막{" "}
-                      {formatMeetingSchedule(item.last_visited_at).slice(0, 11)}
-                      {item.avg_rating_from_us != null
-                        ? ` · 평균 ${item.avg_rating_from_us.toFixed(1)}`
-                        : ""}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="rounded-xl bg-gray-50 py-8 text-center text-sm text-gray-400">
-                아직 다녀간 장소가 없어요
-              </p>
-            )}
-          </section>
+          <p className="px-4 py-12 text-center text-sm text-gray-400">
+            아직 게시글이 없어요
+          </p>
         )}
-      </div>
+      </section>
 
-      <div className="fixed bottom-0 left-0 right-0 mx-auto max-w-md border-t border-gray-100 bg-white p-4">
-        <Link
-          href={`/meetings/${routeMeetingId}/events/new`}
-          className="flex w-full items-center justify-center rounded-full bg-orange-500 py-3 text-sm font-medium text-white"
-        >
-          새 일정 등록
-        </Link>
-      </div>
+      <button
+        type="button"
+        onClick={() => setSheetOpen(true)}
+        className="fixed bottom-6 right-4 z-20 flex items-center gap-2 rounded-full bg-orange-500 px-5 py-3 text-white shadow-lg"
+      >
+        <Pencil size={18} aria-hidden />
+        <span className="font-bold">글쓰기</span>
+      </button>
 
-      {ratingEvent ? (
-        <RatingModal
-          open={Boolean(ratingEvent)}
-          onClose={() => setRatingEvent(null)}
-          eventId={ratingEvent.event_id}
-          placeName={ratingEvent.place.name}
-          meetingLabel={`${ratingEvent.title} · ${formatMeetingSchedule(ratingEvent.scheduled_at).slice(0, 11)}`}
-          onSuccess={() => {
-            setRatingEvent(null);
-            void load();
-          }}
-        />
-      ) : null}
+      <PostActionSheet
+        open={sheetOpen}
+        meetingId={routeMeetingId}
+        onClose={() => setSheetOpen(false)}
+      />
     </div>
   );
 }
