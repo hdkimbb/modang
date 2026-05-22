@@ -835,6 +835,8 @@ def seed_meeting_ratings(session) -> int:
     for event in ended_events:
         if event.id in PENDING_RATING_EVENT_IDS:
             continue
+        if event.place_id == "plc_001":
+            continue
         review_count = random.randint(2, min(5, len(USER_IDS)))
         reviewers = random.sample(USER_IDS, review_count)
         for user_id in reviewers:
@@ -866,6 +868,115 @@ def seed_meeting_ratings(session) -> int:
             created += 1
 
     return created
+
+
+OWNER_RATING_DISTRIBUTION = [5] * 7 + [4] * 3 + [3] + [2]
+
+OWNER_REGULAR_MEETING_TARGETS = [
+    ("mtg_001", 5),
+    ("mtg_002", 3),
+    ("mtg_003", 2),
+    ("mtg_rating", 1),
+]
+
+
+def seed_owner_insights_demo(session) -> tuple[int, int]:
+    """Fixed rating stats and regular-meeting signals for plc_001 owner dashboard."""
+    place_id = "plc_001"
+    rating_created = 0
+    signal_created = 0
+
+    events = session.scalars(
+        select(MeetingEvent)
+        .where(
+            MeetingEvent.place_id == place_id,
+            MeetingEvent.status == "ended",
+        )
+        .order_by(MeetingEvent.scheduled_at.desc()),
+    ).all()
+    if events:
+        user_cycle = (USER_IDS * 4)[: len(OWNER_RATING_DISTRIBUTION)]
+        for idx, rating_value in enumerate(OWNER_RATING_DISTRIBUTION):
+            event = events[idx % len(events)]
+            user_id = user_cycle[idx]
+            existing = session.scalar(
+                select(MeetingRating.id).where(
+                    MeetingRating.event_id == event.id,
+                    MeetingRating.user_id == user_id,
+                ),
+            )
+            if existing is not None:
+                continue
+            rating_id = generate_id("rtg")
+            session.add(
+                MeetingRating(
+                    id=rating_id,
+                    event_id=event.id,
+                    user_id=user_id,
+                    rating=rating_value,
+                    would_revisit=rating_value >= 4,
+                ),
+            )
+            session.add(
+                PlaceSignal(
+                    id=generate_id("sig"),
+                    place_id=place_id,
+                    signal_type="rated",
+                    weight=float(rating_value),
+                    source_ref=event.id,
+                    user_id=user_id,
+                    occurred_at=event.scheduled_at,
+                    is_void=False,
+                    meta={"event_id": event.id, "rating": rating_value},
+                ),
+            )
+            rating_created += 1
+
+    meeting_id_expr = PlaceSignal.meta["meeting_id"].as_string()
+    for meeting_id, target_count in OWNER_REGULAR_MEETING_TARGETS:
+        existing = (
+            session.scalar(
+                select(func.count())
+                .select_from(PlaceSignal)
+                .where(
+                    PlaceSignal.place_id == place_id,
+                    PlaceSignal.signal_type == "selected",
+                    PlaceSignal.is_void.is_(False),
+                    meeting_id_expr == meeting_id,
+                ),
+            )
+            or 0
+        )
+        meeting = session.get(Meeting, meeting_id)
+        for _ in range(max(0, target_count - existing)):
+            ref_event = session.scalar(
+                select(MeetingEvent.id)
+                .where(
+                    MeetingEvent.place_id == place_id,
+                    MeetingEvent.meeting_id == meeting_id,
+                )
+                .limit(1),
+            )
+            session.add(
+                PlaceSignal(
+                    id=generate_id("sig"),
+                    place_id=place_id,
+                    signal_type="selected",
+                    weight=1.0,
+                    source_ref=ref_event or f"reg_{meeting_id}",
+                    user_id=meeting.host_user_id if meeting else USER_IDS[0],
+                    occurred_at=datetime.now(timezone.utc),
+                    is_void=False,
+                    meta={
+                        "meeting_id": meeting_id,
+                        "category": meeting.category if meeting else None,
+                        "district": meeting.district if meeting else None,
+                    },
+                ),
+            )
+            signal_created += 1
+
+    return rating_created, signal_created
 
 
 def seed_signals(session) -> list[PlaceSignal]:
@@ -927,6 +1038,7 @@ def main() -> None:
         pending_events = seed_pending_rating_events(session)
         session.flush()
         ratings_count = seed_meeting_ratings(session)
+        owner_ratings, owner_signals = seed_owner_insights_demo(session)
         posts_count = seed_meeting_posts(session)
         session.flush()
         comments_count = seed_meeting_post_comments(session)
@@ -935,7 +1047,10 @@ def main() -> None:
         session.flush()
         seed_season_awards(session)
         session.commit()
-        print(f"Seeded {q4_signals} Q4 demo signals, {season_count} seasons with auto-awards")
+        print(
+            f"Seeded {q4_signals} Q4 demo signals, {season_count} seasons with auto-awards, "
+            f"{owner_ratings} owner insight ratings, {owner_signals} owner regular-meeting signals",
+        )
         print_summary(
             session,
             len(signals),

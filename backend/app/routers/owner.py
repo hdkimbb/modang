@@ -26,6 +26,8 @@ from app.schemas.owner import (
     OwnerMessageUpdateRequest,
     OwnerPlaceSummary,
     OwnerRankingSummary,
+    OwnerRatingStatsResponse,
+    OwnerRegularMeetingsResponse,
     OwnerRecommendationTargetsResponse,
     OwnerRecommendationTargetsUpdateRequest,
     OwnerTimeslotInsightsResponse,
@@ -39,6 +41,10 @@ from app.services.owner_insights import (
     OWNER_RECOMMENDATION_CATEGORIES,
     category_display_label,
     recommended_action_for_category,
+)
+from app.services.owner_insights_data import (
+    fetch_owner_rating_stats,
+    fetch_owner_regular_meetings,
 )
 from app.services.owner_timeslots import (
     TIMESLOT_LABELS,
@@ -397,6 +403,27 @@ def update_owner_message(
         message=place.owner_message or "",
         active=bool(place.owner_message_active),
     )
+
+
+@router.get("/insights/ratings", response_model=OwnerRatingStatsResponse)
+def get_owner_rating_insights(
+    user_id: str = Query(..., min_length=1),
+    db: Session = Depends(get_db),
+) -> OwnerRatingStatsResponse:
+    _, place = _require_owner(db, user_id)
+    return fetch_owner_rating_stats(db, place.id)
+
+
+@router.get(
+    "/insights/regular-meetings",
+    response_model=OwnerRegularMeetingsResponse,
+)
+def get_owner_regular_meeting_insights(
+    user_id: str = Query(..., min_length=1),
+    db: Session = Depends(get_db),
+) -> OwnerRegularMeetingsResponse:
+    _, place = _require_owner(db, user_id)
+    return fetch_owner_regular_meetings(db, place.id)
 
 
 @router.get("/insights/timeslots", response_model=OwnerTimeslotInsightsResponse)

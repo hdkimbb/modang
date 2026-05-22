@@ -16,6 +16,8 @@ import type {
   OwnerDashboard,
   OwnerInsights,
   OwnerMessage,
+  OwnerRatingStats,
+  OwnerRegularMeetings,
   OwnerTabId,
   OwnerTimeslotInsights,
 } from "@/lib/types/owner";
@@ -45,6 +47,9 @@ function OwnerDashboardContent() {
   const [draftMessage, setDraftMessage] = useState("");
   const [savingMessage, setSavingMessage] = useState(false);
   const [timeslots, setTimeslots] = useState<OwnerTimeslotInsights | null>(null);
+  const [ratingStats, setRatingStats] = useState<OwnerRatingStats | null>(null);
+  const [regularMeetings, setRegularMeetings] =
+    useState<OwnerRegularMeetings["items"]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [savedCategories, setSavedCategories] = useState<string[]>([]);
   const [savingTargets, setSavingTargets] = useState(false);
@@ -59,7 +64,8 @@ function OwnerDashboardContent() {
     setLoading(true);
     const params = new URLSearchParams({ user_id: userId });
     try {
-      const [dashRes, msgRes, insRes, slotRes, targetRes] = await Promise.all([
+      const [dashRes, msgRes, insRes, slotRes, targetRes, ratingRes, regularRes] =
+        await Promise.all([
         fetch(`${API_BASE}/api/v1/owner/dashboard?${params}`, {
           cache: "no-store",
         }),
@@ -73,6 +79,12 @@ function OwnerDashboardContent() {
           cache: "no-store",
         }),
         fetch(`${API_BASE}/api/v1/owner/recommendation-targets?${params}`, {
+          cache: "no-store",
+        }),
+        fetch(`${API_BASE}/api/v1/owner/insights/ratings?${params}`, {
+          cache: "no-store",
+        }),
+        fetch(`${API_BASE}/api/v1/owner/insights/regular-meetings?${params}`, {
           cache: "no-store",
         }),
       ]);
@@ -92,13 +104,22 @@ function OwnerDashboardContent() {
       if (!targetRes.ok) {
         throw new Error(await parseApiError(targetRes, "추천 노출 설정을 불러오지 못했어요."));
       }
+      if (!ratingRes.ok) {
+        throw new Error(await parseApiError(ratingRes, "별점 통계를 불러오지 못했어요."));
+      }
+      if (!regularRes.ok) {
+        throw new Error(await parseApiError(regularRes, "단골 모임을 불러오지 못했어요."));
+      }
 
-      const [dashJson, msgJson, insJson, slotJson, targetJson] = await Promise.all([
+      const [dashJson, msgJson, insJson, slotJson, targetJson, ratingJson, regularJson] =
+        await Promise.all([
         dashRes.json() as Promise<OwnerDashboard>,
         msgRes.json() as Promise<OwnerMessage>,
         insRes.json() as Promise<OwnerInsights>,
         slotRes.json() as Promise<OwnerTimeslotInsights>,
         targetRes.json() as Promise<{ categories: string[] }>,
+        ratingRes.json() as Promise<OwnerRatingStats>,
+        regularRes.json() as Promise<OwnerRegularMeetings>,
       ]);
 
       setData(dashJson);
@@ -106,6 +127,8 @@ function OwnerDashboardContent() {
       setDraftMessage(msgJson.message);
       setInsights(insJson);
       setTimeslots(slotJson);
+      setRatingStats(ratingJson);
+      setRegularMeetings(regularJson.items);
       setSelectedCategories(targetJson.categories);
       setSavedCategories(targetJson.categories);
     } catch (e) {
@@ -315,6 +338,8 @@ function OwnerDashboardContent() {
           insights={insights}
           timeslots={timeslots}
           mentionStats={data.mention_stats}
+          ratingStats={ratingStats}
+          regularMeetings={regularMeetings}
           onApplyMessageTemplate={handleApplyMessageTemplate}
         />
       ) : null}

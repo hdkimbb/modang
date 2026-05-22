@@ -84,6 +84,23 @@ class TimeslotInsight(BaseModel):
     percentage: int
 
 
+class OwnerRatingStatsResponse(BaseModel):
+    average: float | None = None
+    total_count: int = 0
+    distribution: dict[str, int] = Field(default_factory=dict)
+
+
+class OwnerRegularMeetingItem(BaseModel):
+    meeting_id: str
+    title: str
+    category: str
+    visit_count: int
+
+
+class OwnerRegularMeetingsResponse(BaseModel):
+    items: list[OwnerRegularMeetingItem]
+
+
 class OwnerTimeslotInsightsResponse(BaseModel):
     total_events: int
     slots: list[TimeslotInsight]

@@ -76,3 +76,20 @@ export type OwnerTimeslotInsights = {
   low_slot: string | null;
   peak_recommendation: string;
 };
+
+export type OwnerRatingStats = {
+  average: number | null;
+  total_count: number;
+  distribution: Record<string, number>;
+};
+
+export type OwnerRegularMeetingItem = {
+  meeting_id: string;
+  title: string;
+  category: string;
+  visit_count: number;
+};
+
+export type OwnerRegularMeetings = {
+  items: OwnerRegularMeetingItem[];
+};
