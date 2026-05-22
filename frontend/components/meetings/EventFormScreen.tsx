@@ -40,7 +40,7 @@ export function EventFormScreen({
     [draft.title, draft.place?.placeId],
   );
 
-  const largeTitle = draft.title.trim() || "일정 만들기";
+  const headerTitle = draft.title.trim() || "일정 만들기";
 
   useEffect(() => {
     const placeId = searchParams.get("place_id");
@@ -95,13 +95,13 @@ export function EventFormScreen({
   return (
     <div className="flex min-h-dvh flex-col bg-seed-gray-00 pb-28">
       <NavigationTop
-        variant="large"
-        largeTitle={largeTitle}
+        variant="sub"
+        title={headerTitle}
         onBack={() => router.back()}
         divider
         className="sticky top-0 z-10 shrink-0"
       />
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto pt-4">
         <ListRoot>
           <FormListRow
             icon="📅"

@@ -46,18 +46,18 @@ export function HomeTab({
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
-      <section className="grid grid-cols-2 gap-3 px-4 pt-3">
+      <section className="grid grid-cols-2 gap-3 px-4">
         <OwnerAwardsCard placeId={data.place.id} />
         <OwnerRankingCard ranking={data.ranking} />
       </section>
 
       <div
-        className="-mx-4 h-2 shrink-0 bg-seed-gray-100"
+        className="-mx-4 my-4 h-2 shrink-0 bg-seed-gray-100"
         role="separator"
         aria-hidden
       />
 
-      <section className="grid grid-cols-3 gap-3 px-4 pb-2 pt-3">
+      <section className="grid grid-cols-3 gap-3 px-4 pb-2">
         {filterChips.map((chip) => {
           const active = meetingFilter === chip.id;
           return (

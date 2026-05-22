@@ -23,7 +23,7 @@ export function InsightsTab({
   onApplyMessageTemplate,
 }: InsightsTabProps) {
   return (
-    <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 pb-6">
+    <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 pb-6">
       <OwnerMentionCard stats={mentionStats} />
 
       <section className="rounded-2xl border border-gray-200 bg-white p-4">

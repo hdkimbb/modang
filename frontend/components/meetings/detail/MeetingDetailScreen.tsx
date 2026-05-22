@@ -138,9 +138,6 @@ export function MeetingDetailScreen({ routeMeetingId }: MeetingDetailScreenProps
   }
 
   const headerRight = [
-    <button key="chat" type="button" aria-label="채팅" className="text-seed-gray-900">
-      <MessageCircle size={24} strokeWidth={2} />
-    </button>,
     <button key="search" type="button" aria-label="검색" className="text-seed-gray-900">
       <Search size={24} strokeWidth={2} />
     </button>,
@@ -346,7 +343,7 @@ export function MeetingDetailScreen({ routeMeetingId }: MeetingDetailScreenProps
         </section>
       )}
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-6 z-30 flex justify-center">
+      <div className="pointer-events-none fixed bottom-6 right-4 z-30">
         <button
           type="button"
           onClick={() => setSheetOpen(true)}

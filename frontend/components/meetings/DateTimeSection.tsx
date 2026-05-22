@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 import { useEventDraft } from "@/context/EventDraftContext";
-import { TIME_OPTIONS } from "@/lib/constants/event-form";
 
 import { SimpleCalendar } from "./SimpleCalendar";
 
@@ -49,18 +48,14 @@ export function DateTimeSection() {
       />
       <div style={rowStyle}>
         <span style={labelStyle}>시간</span>
-        <select
+        <input
+          type="time"
+          step={60}
           value={time}
           onChange={(e) => setTime(e.target.value)}
           style={selectStyle}
           aria-label="시간 선택"
-        >
-          {TIME_OPTIONS.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
+        />
       </div>
       <div style={rowStyle}>
         <span style={labelStyle}>반복</span>

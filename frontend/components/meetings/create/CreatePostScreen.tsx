@@ -211,8 +211,8 @@ export function CreatePostScreen({ routeMeetingId }: CreatePostScreenProps) {
       />
 
       <NavigationTop
-        variant="large"
-        largeTitle="글쓰기"
+        variant="sub"
+        title="글쓰기"
         divider
         className="sticky top-0 z-10 shrink-0"
         onBack={() => router.back()}
@@ -230,6 +230,7 @@ export function CreatePostScreen({ routeMeetingId }: CreatePostScreenProps) {
           </button>,
         ]}
       />
+      <div className="flex flex-1 flex-col pt-4">
       {meetingName ? (
         <p className="border-b border-seed-gray-100 px-4 pb-2 text-sm text-seed-gray-500">
           {meetingName}
@@ -303,6 +304,7 @@ export function CreatePostScreen({ routeMeetingId }: CreatePostScreenProps) {
       <p className="px-4 py-3 text-xs text-gray-500">
         🌐 {neighborhood || "동네"} 근처 이웃들이 볼 수 있어요
       </p>
+      </div>
 
       <footer className="fixed bottom-0 left-0 right-0 z-30 mx-auto mt-auto flex max-w-md items-center gap-4 border-t border-seed-gray-200 bg-seed-gray-00 px-4 py-3">
         <button type="button" onClick={() => setAttachOpen(true)} aria-label="첨부">

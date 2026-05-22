@@ -23,7 +23,7 @@ export interface EventDraft {
 export const DEFAULT_EVENT_DRAFT: EventDraft = {
   title: "편안한 카페 수다 모임🍰",
   date: new Date(2026, 4, 21),
-  time: "오후 12:00",
+  time: "12:00",
   repeat: "없음",
   place: null,
   capacity: 4,

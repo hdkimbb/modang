@@ -91,14 +91,14 @@ export function CreateMeetingForm() {
         </p>
       ) : null}
       <NavigationTop
-        variant="large"
-        largeTitle="어떤 모임을 만들까요?"
+        variant="sub"
+        title="모임 만들기"
         onBack={() => router.back()}
         divider
         className="sticky top-0 z-10 shrink-0"
       />
 
-      <div className="flex-1 space-y-8 px-4 pb-6 pt-2">
+      <div className="flex-1 space-y-8 px-4 pb-6 pt-4">
         <section className="space-y-2">
           <label className="text-base font-bold text-gray-900" htmlFor="name">
             모임명

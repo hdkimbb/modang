@@ -300,6 +300,7 @@ function OwnerDashboardContent() {
         onChange={(key) => setActiveTab(key as OwnerTabId)}
       />
 
+      <div className="flex min-h-0 flex-1 flex-col pt-4">
       {activeTab === "home" ? (
         <HomeTab
           data={data}
@@ -337,6 +338,7 @@ function OwnerDashboardContent() {
           onPendingTemplateConsumed={() => setPendingMessageTemplate(null)}
         />
       ) : null}
+      </div>
     </div>
   );
 }
