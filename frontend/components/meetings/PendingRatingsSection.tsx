@@ -30,7 +30,7 @@ function loadDismissed(userId: string): Set<string> {
 function saveDismissed(userId: string, ids: Set<string>) {
   localStorage.setItem(
     `${DISMISS_STORAGE_PREFIX}${userId}`,
-    JSON.stringify([...ids]),
+    JSON.stringify(Array.from(ids)),
   );
 }
 
