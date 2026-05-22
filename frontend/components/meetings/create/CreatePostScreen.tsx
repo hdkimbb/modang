@@ -83,6 +83,12 @@ export function CreatePostScreen({ routeMeetingId }: CreatePostScreenProps) {
     }
   }, []);
 
+  const closeMentionPicker = useCallback(() => {
+    setMentionQuery(null);
+    setMentionAnchor(null);
+    setMentionQueryLen(0);
+  }, []);
+
   const handleSelectMention = useCallback(
     (item: MentionSelection) => {
       if (mentionAnchor === null) return;
@@ -235,13 +241,7 @@ export function CreatePostScreen({ routeMeetingId }: CreatePostScreenProps) {
         <span className="text-gray-400">›</span>
       </button>
 
-      <div className="relative flex-1">
-        <MentionPicker
-          query={mentionAnchor !== null ? (mentionQuery ?? "") : null}
-          onSelect={handleSelectMention}
-          neighborhood={neighborhood || undefined}
-          meetingId={apiMeetingId}
-        />
+      <div className="flex-1">
         <textarea
           ref={textareaRef}
           value={content}
@@ -345,6 +345,15 @@ export function CreatePostScreen({ routeMeetingId }: CreatePostScreenProps) {
         open={attachOpen}
         onClose={() => setAttachOpen(false)}
         onPhoto={openFilePicker}
+      />
+
+      <MentionPicker
+        query={mentionAnchor !== null ? (mentionQuery ?? "") : null}
+        onSelect={handleSelectMention}
+        onClose={closeMentionPicker}
+        neighborhood={neighborhood || undefined}
+        meetingId={apiMeetingId}
+        excludeCloseRef={textareaRef}
       />
     </div>
   );

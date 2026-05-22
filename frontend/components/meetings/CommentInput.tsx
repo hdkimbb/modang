@@ -56,6 +56,12 @@ export function CommentInput({
     }
   }, []);
 
+  const closeMentionPicker = useCallback(() => {
+    setMentionQuery(null);
+    setMentionAnchor(null);
+    setMentionQueryLen(0);
+  }, []);
+
   const handleSelectMention = useCallback(
     (item: MentionSelection) => {
       if (mentionAnchor === null) return;
@@ -119,14 +125,9 @@ export function CommentInput({
   const pickerQuery = mentionAnchor !== null ? (mentionQuery ?? "") : null;
 
   return (
-    <div className="relative border-t border-gray-100 bg-white px-3 py-2">
-      <MentionPicker
-        query={pickerQuery}
-        onSelect={handleSelectMention}
-        neighborhood={neighborhood}
-        meetingId={meetingId}
-      />
-      <div className="flex items-center gap-2">
+    <>
+      <div className="border-t border-gray-100 bg-white px-3 py-2">
+        <div className="flex items-center gap-2">
         <button
           type="button"
           className="shrink-0 text-gray-400"
@@ -186,7 +187,17 @@ export function CommentInput({
         >
           {persona.name.charAt(0)}
         </button>
+        </div>
       </div>
-    </div>
+
+      <MentionPicker
+        query={pickerQuery}
+        onSelect={handleSelectMention}
+        onClose={closeMentionPicker}
+        neighborhood={neighborhood}
+        meetingId={meetingId}
+        excludeCloseRef={inputRef}
+      />
+    </>
   );
 }
