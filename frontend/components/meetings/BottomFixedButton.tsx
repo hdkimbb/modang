@@ -28,6 +28,7 @@ export function BottomFixedButton({
       }}
     >
       <ActionButton
+        className="modang-action-btn"
         variant={variant}
         size="large"
         onClick={onClick}

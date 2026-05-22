@@ -3,6 +3,13 @@
 import { Target } from "lucide-react";
 import { useEffect, useRef } from "react";
 
+import { AdCenterBanner } from "@/components/owner/AdCenterBanner";
+import {
+  BTN_CHIP_DISABLED,
+  BTN_FILLED_PRIMARY,
+  BTN_FILLED_PRIMARY_DISABLED,
+  BTN_FILLED_PRIMARY_ENABLED,
+} from "@/lib/button-styles";
 import type { OwnerMessage } from "@/lib/types/owner";
 
 const MESSAGE_MAX = 100;
@@ -75,6 +82,8 @@ export function ToolsTab({
 
   return (
     <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 pb-6">
+      <AdCenterBanner />
+
       <section
         ref={messageCardRef}
         className="rounded-2xl border border-gray-200 bg-white p-4"
@@ -104,7 +113,7 @@ export function ToolsTab({
                 type="button"
                 disabled={savingMessage}
                 onClick={() => void onSaveMessage()}
-                className="flex-1 rounded-full bg-orange-500 py-2 text-sm font-medium text-white disabled:opacity-50"
+                className={`flex-1 rounded-full py-2 text-sm font-medium ${BTN_FILLED_PRIMARY}`}
               >
                 저장
               </button>
@@ -197,7 +206,7 @@ export function ToolsTab({
                   selected
                     ? "rounded-full bg-gray-900 px-4 py-2 text-sm text-white"
                     : disabled
-                      ? "cursor-not-allowed rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 opacity-50"
+                      ? BTN_CHIP_DISABLED
                       : "rounded-full border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700"
                 }
               >
@@ -215,10 +224,10 @@ export function ToolsTab({
           type="button"
           disabled={!categoriesDirty || savingTargets}
           onClick={() => void onSaveRecommendationTargets()}
-          className={`mt-4 w-full rounded-full py-3 text-sm font-medium text-white ${
+          className={`mt-4 w-full rounded-full py-3 text-sm font-medium ${
             categoriesDirty && !savingTargets
-              ? "bg-orange-500"
-              : "bg-gray-300"
+              ? BTN_FILLED_PRIMARY_ENABLED
+              : BTN_FILLED_PRIMARY_DISABLED
           }`}
         >
           저장하기

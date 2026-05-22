@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  BTN_FILLED_PRIMARY_DISABLED,
+  BTN_FILLED_PRIMARY_ENABLED,
+} from "@/lib/button-styles";
+
 import { ChevronDown, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -228,10 +233,10 @@ export function CreateMeetingForm() {
           type="button"
           disabled={!canSubmit || submitting}
           onClick={() => void handleSubmit()}
-          className={`w-full py-4 text-base font-bold text-white transition-colors ${
+          className={`w-full py-4 text-base font-bold transition-colors ${
             canSubmit && !submitting
-              ? "bg-orange-500 hover:bg-orange-600"
-              : "cursor-not-allowed bg-gray-300"
+              ? `${BTN_FILLED_PRIMARY_ENABLED} hover:bg-orange-600`
+              : BTN_FILLED_PRIMARY_DISABLED
           }`}
         >
           {submitting ? "만드는 중…" : "모임 만들기"}

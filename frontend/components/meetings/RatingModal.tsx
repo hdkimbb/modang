@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  BTN_FILLED_PRIMARY_DISABLED,
+  BTN_FILLED_PRIMARY_ENABLED,
+} from "@/lib/button-styles";
+
 import { Star, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -130,10 +135,10 @@ export function RatingModal({
           type="button"
           disabled={rating < 1 || wouldRevisit === null || submitting}
           onClick={() => void handleSubmit()}
-          className={`mt-6 w-full rounded-full py-3 text-sm font-medium text-white ${
+          className={`mt-6 w-full rounded-full py-3 text-sm font-medium ${
             rating >= 1 && wouldRevisit !== null && !submitting
-              ? "bg-orange-500"
-              : "bg-gray-300"
+              ? BTN_FILLED_PRIMARY_ENABLED
+              : BTN_FILLED_PRIMARY_DISABLED
           }`}
         >
           평가 등록

@@ -182,7 +182,7 @@ export function CommentInput({
             e.stopPropagation();
             void handleSubmit();
           }}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-white disabled:bg-gray-200"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-white disabled:bg-gray-disabled disabled:text-white disabled:cursor-not-allowed disabled:opacity-100"
           aria-label="전송"
         >
           {persona.name.charAt(0)}

@@ -1,5 +1,7 @@
 "use client";
 
+import { BTN_TEXT_DISABLED } from "@/lib/button-styles";
+
 import {
   AtSign,
   Image as ImageIcon,
@@ -225,7 +227,7 @@ export function CreatePostScreen({ routeMeetingId }: CreatePostScreenProps) {
           disabled={!canSubmit}
           onClick={() => void handleSubmit()}
           className={`text-sm font-bold ${
-            canSubmit ? "text-gray-900" : "text-gray-300"
+            canSubmit ? "text-gray-900" : BTN_TEXT_DISABLED
           }`}
         >
           완료
