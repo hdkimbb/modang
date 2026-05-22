@@ -174,7 +174,7 @@ export function PostDetailScreen({
         </button>
       ) : null}
 
-      <div className="fixed bottom-0 left-0 right-0 z-10 mx-auto max-w-md">
+      <div className="fixed bottom-0 left-0 right-0 z-20 mx-auto max-w-md">
         <CommentInput
           onSubmit={handleCommentSubmit}
           neighborhood={neighborhood || undefined}

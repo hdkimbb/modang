@@ -57,4 +57,4 @@ export interface MeetingPlaceHistoryApi {
   items: PlaceHistoryItemApi[];
 }
 
-export type MeetingDetailTab = "schedule" | "places";
+export type MeetingDetailTab = "posts" | "schedule";

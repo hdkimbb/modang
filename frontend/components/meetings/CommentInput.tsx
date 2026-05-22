@@ -1,7 +1,7 @@
 "use client";
 
 import { AtSign, Image as ImageIcon } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { usePersona } from "@/context/PersonaContext";
 import {
@@ -35,6 +35,8 @@ export function CommentInput({
 }: CommentInputProps) {
   const { persona } = usePersona();
   const inputRef = useRef<HTMLInputElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+  const [pickerBottomOffset, setPickerBottomOffset] = useState(0);
   const [text, setText] = useState("");
   const [placeMentions, setPlaceMentions] = useState<PlaceMention[]>([]);
   const [userMentions, setUserMentions] = useState<UserMention[]>([]);
@@ -124,9 +126,26 @@ export function CommentInput({
 
   const pickerQuery = mentionAnchor !== null ? (mentionQuery ?? "") : null;
 
+  useEffect(() => {
+    const el = barRef.current;
+    if (!el) return;
+    const update = () => setPickerBottomOffset(el.getBoundingClientRect().height);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
   return (
     <>
-      <div className="border-t border-gray-100 bg-white px-3 py-2">
+      <div
+        ref={barRef}
+        className="border-t border-seed-gray-200 bg-seed-gray-00 px-3 py-2"
+      >
         <div className="flex items-center gap-2">
         <button
           type="button"
@@ -196,7 +215,8 @@ export function CommentInput({
         onClose={closeMentionPicker}
         neighborhood={neighborhood}
         meetingId={meetingId}
-        excludeCloseRef={inputRef}
+        excludeCloseRef={barRef}
+        bottomOffset={pickerBottomOffset}
       />
     </>
   );

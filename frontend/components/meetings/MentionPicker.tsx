@@ -18,6 +18,8 @@ interface MentionPickerProps {
   meetingId?: string;
   /** 이 영역 클릭 시 시트를 닫지 않음 (본문/댓글 입력창) */
   excludeCloseRef?: React.RefObject<HTMLElement | null>;
+  /** 뷰포트 하단에서 올릴 px (댓글 입력창 등 fixed 바 높이) */
+  bottomOffset?: number;
 }
 
 export function MentionPicker({
@@ -27,6 +29,7 @@ export function MentionPicker({
   neighborhood,
   meetingId,
   excludeCloseRef,
+  bottomOffset = 0,
 }: MentionPickerProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const [places, setPlaces] = useState<PlaceQuickSearchItemApi[]>([]);
@@ -129,7 +132,8 @@ export function MentionPicker({
       ref={sheetRef}
       role="dialog"
       aria-label="멘션 검색"
-      className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-md rounded-t-2xl bg-white pb-4 shadow-2xl"
+      className="fixed left-0 right-0 z-50 mx-auto max-w-md rounded-t-2xl bg-white pb-4 shadow-2xl"
+      style={{ bottom: bottomOffset }}
     >
       <div className="mx-auto mt-3 h-1 w-12 shrink-0 rounded-full bg-gray-200" />
       <div className="max-h-[50vh] overflow-y-auto pt-2">

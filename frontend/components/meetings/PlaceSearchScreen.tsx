@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { ScreenHeader } from "@/components/layout/ScreenHeader";
 import { KakaoMap } from "@/components/maps/KakaoMap";
+import { BottomFixedButton } from "@/components/meetings/BottomFixedButton";
 import { useEventDraft } from "@/context/EventDraftContext";
 import { getRecommendedPlaces, searchPlaces } from "@/lib/api";
 import type { Place } from "@/lib/types/place";
@@ -14,7 +15,6 @@ import { PlaceDetailSheet } from "./PlaceDetailSheet";
 import { PlaceEmptyState } from "./PlaceEmptyState";
 import { PlaceResultItem } from "./PlaceResultItem";
 import { PlaceSearchBar } from "./PlaceSearchBar";
-import { PlaceSelectionSheet } from "./PlaceSelectionSheet";
 
 function PlaceResultList({
   places,
@@ -60,6 +60,7 @@ export function PlaceSearchScreen() {
 
   const showEmpty = query.trim().length === 0;
   const hasSearchResults = !showEmpty && !loading && !error && results.length > 0;
+  const canConfirm = Boolean(pendingPlace?.placeId);
 
   const handleOpenDetail = (place: Place) => {
     setDetailPlace(place);
@@ -128,7 +129,7 @@ export function PlaceSearchScreen() {
   const listSelectedId = pendingPlace?.id ?? null;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex min-h-dvh flex-col bg-seed-gray-00 pb-28">
       <ScreenHeader
         variant="back"
         title="장소 검색"
@@ -162,7 +163,7 @@ export function PlaceSearchScreen() {
           </div>
           {showList ? (
             <div ref={pendingScrollRef} className="min-h-0 flex-1 overflow-y-auto">
-              <h3 className="px-4 pb-2 text-base font-bold text-gray-900">
+              <h3 className="px-4 pb-2 text-base font-bold text-seed-gray-900">
                 검색 결과 {results.length}개
               </h3>
               <PlaceResultList
@@ -191,7 +192,7 @@ export function PlaceSearchScreen() {
                 </p>
               ) : recommended.length > 0 ? (
                 <section>
-                  <h3 className="px-4 pb-2 text-base font-bold text-gray-900">
+                  <h3 className="px-4 pb-2 text-base font-bold text-seed-gray-900">
                     우리 동네 인기 모임 장소
                   </h3>
                   <div ref={pendingScrollRef}>
@@ -231,8 +232,17 @@ export function PlaceSearchScreen() {
       )}
 
       {pendingPlace && !detailPlace ? (
-        <PlaceSelectionSheet place={pendingPlace} onConfirm={handleConfirm} />
+        <div className="shrink-0 border-t border-seed-gray-200 bg-seed-gray-00 px-4 py-3">
+          <p className="text-sm font-bold text-seed-gray-900">{pendingPlace.name}</p>
+          <p className="mt-0.5 text-sm text-seed-gray-500">{pendingPlace.address}</p>
+        </div>
       ) : null}
+
+      <BottomFixedButton
+        label="장소 선택"
+        onClick={handleConfirm}
+        disabled={!canConfirm}
+      />
 
       {detailPlace ? (
         <PlaceDetailSheet

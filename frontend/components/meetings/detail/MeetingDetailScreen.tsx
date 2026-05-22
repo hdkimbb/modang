@@ -21,7 +21,6 @@ import { PostActionSheet } from "@/components/meetings/PostActionSheet";
 import {
   getMeetingDetail,
   getMeetingEvents,
-  getMeetingPlaceHistory,
   getMeetingPosts,
 } from "@/lib/api";
 import { resolveApiMeetingId } from "@/lib/resolve-meeting-id";
@@ -29,16 +28,14 @@ import { DEFAULT_MEETING_THUMBNAIL } from "@/lib/types/meeting-list";
 import type {
   MeetingDetailApi,
   MeetingEventSummaryApi,
-  PlaceHistoryItemApi,
 } from "@/lib/types/meeting-detail";
 import type { MeetingPostItemApi } from "@/lib/types/meeting-post";
 
 import { MeetingEventCard } from "./MeetingEventCard";
-import { MeetingPlaceHistoryCard } from "./MeetingPlaceHistoryCard";
 import { MeetingPostCard } from "./MeetingPostCard";
 
 type BoardFilter = "all" | "free";
-type DetailTab = "schedule" | "place_history";
+type DetailTab = "posts" | "schedule";
 
 interface MeetingDetailScreenProps {
   routeMeetingId: string;
@@ -52,8 +49,8 @@ const ACTION_ITEMS = [
 ] as const;
 
 const DETAIL_TABS = [
+  { key: "posts" as const, label: "게시글" },
   { key: "schedule" as const, label: "일정" },
-  { key: "place_history" as const, label: "장소 이력" },
 ];
 
 export function MeetingDetailScreen({ routeMeetingId }: MeetingDetailScreenProps) {
@@ -64,10 +61,9 @@ export function MeetingDetailScreen({ routeMeetingId }: MeetingDetailScreenProps
   const [posts, setPosts] = useState<MeetingPostItemApi[]>([]);
   const [total, setTotal] = useState(0);
   const [boardFilter, setBoardFilter] = useState<BoardFilter>("all");
-  const [detailTab, setDetailTab] = useState<DetailTab>("schedule");
+  const [detailTab, setDetailTab] = useState<DetailTab>("posts");
   const [allEvents, setAllEvents] = useState<MeetingEventSummaryApi[]>([]);
-  const [placeHistory, setPlaceHistory] = useState<PlaceHistoryItemApi[]>([]);
-  const [tabLoading, setTabLoading] = useState(false);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -95,28 +91,12 @@ export function MeetingDetailScreen({ routeMeetingId }: MeetingDetailScreenProps
   }, [load]);
 
   useEffect(() => {
-    if (!detail) return;
-    setTabLoading(true);
-    const loadTab = async () => {
-      try {
-        if (detailTab === "schedule") {
-          const { items } = await getMeetingEvents(apiMeetingId);
-          setAllEvents(items);
-        } else {
-          const { items } = await getMeetingPlaceHistory(apiMeetingId);
-          setPlaceHistory(items);
-        }
-      } catch {
-        if (detailTab === "schedule") {
-          setAllEvents([]);
-        } else {
-          setPlaceHistory([]);
-        }
-      } finally {
-        setTabLoading(false);
-      }
-    };
-    void loadTab();
+    if (!detail || detailTab !== "schedule") return;
+    setScheduleLoading(true);
+    void getMeetingEvents(apiMeetingId)
+      .then(({ items }) => setAllEvents(items))
+      .catch(() => setAllEvents([]))
+      .finally(() => setScheduleLoading(false));
   }, [apiMeetingId, detail, detailTab]);
 
   const { upcomingEvents, pastEvents } = useMemo(() => {
@@ -228,69 +208,6 @@ export function MeetingDetailScreen({ routeMeetingId }: MeetingDetailScreenProps
         })}
       </section>
 
-      <Tabs
-        items={DETAIL_TABS}
-        activeKey={detailTab}
-        onChange={(key) => setDetailTab(key as DetailTab)}
-      />
-
-      <section className="min-h-[120px] px-4 py-4">
-        {tabLoading ? (
-          <p className="py-8 text-center text-sm text-seed-gray-500">불러오는 중...</p>
-        ) : detailTab === "schedule" ? (
-          <div className="space-y-6">
-            <div>
-              <h3 className="mb-3 text-sm font-bold text-seed-gray-900">
-                다가올 일정
-              </h3>
-              {upcomingEvents.length > 0 ? (
-                <ul className="flex flex-col gap-3">
-                  {upcomingEvents.map((ev) => (
-                    <li key={ev.event_id}>
-                      <MeetingEventCard event={ev} />
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="py-6 text-center text-sm text-seed-gray-400">
-                  예정된 일정이 없어요
-                </p>
-              )}
-            </div>
-            <div>
-              <h3 className="mb-3 text-sm font-bold text-seed-gray-900">
-                지난 일정
-              </h3>
-              {pastEvents.length > 0 ? (
-                <ul className="flex flex-col gap-3">
-                  {pastEvents.map((ev) => (
-                    <li key={ev.event_id}>
-                      <MeetingEventCard event={ev} />
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="py-6 text-center text-sm text-seed-gray-400">
-                  지난 일정이 없어요
-                </p>
-              )}
-            </div>
-          </div>
-        ) : placeHistory.length > 0 ? (
-          <ul className="flex flex-col gap-3">
-            {placeHistory.map((item) => (
-              <li key={item.place.place_id}>
-                <MeetingPlaceHistoryCard item={item} meetingName={detail.name} />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="py-12 text-center text-sm text-seed-gray-400">
-            아직 다녀간 장소가 없어요
-          </p>
-        )}
-      </section>
-
       <section className="mx-4 my-4">
         <div className="flex items-center gap-3 rounded-xl bg-blue-50 p-4">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100">
@@ -318,68 +235,127 @@ export function MeetingDetailScreen({ routeMeetingId }: MeetingDetailScreenProps
         </div>
       </section>
 
-      <section className="px-4">
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          <button
-            type="button"
-            onClick={() => setBoardFilter("all")}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-sm ${
-              boardFilter === "all"
-                ? "bg-seed-gray-900 text-white"
-                : "border border-seed-gray-200 text-seed-gray-600"
-            }`}
-          >
-            전체 {detail.post_count || total}
-          </button>
-          <button
-            type="button"
-            onClick={() => setBoardFilter("free")}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-sm ${
-              boardFilter === "free"
-                ? "bg-seed-gray-900 text-white"
-                : "border border-seed-gray-200 text-seed-gray-600"
-            }`}
-          >
-            자유 게시판
-          </button>
-          <button
-            type="button"
-            onClick={() => alert("준비 중")}
-            className="shrink-0 rounded-full border border-seed-gray-200 px-4 py-1.5 text-sm text-seed-gray-600"
-          >
-            + 추가
-          </button>
-        </div>
-        <label className="mt-2 flex items-center gap-2 text-sm text-seed-gray-500">
-          <input type="checkbox" className="rounded-full" disabled />
-          인기순으로 보기
-        </label>
-      </section>
+      <Tabs
+        items={DETAIL_TABS}
+        activeKey={detailTab}
+        onChange={(key) => setDetailTab(key as DetailTab)}
+      />
 
-      <section>
-        {posts.length > 0 ? (
-          posts.map((post) => (
-            <MeetingPostCard
-              key={post.id}
-              post={post}
-              meetingId={routeMeetingId}
-            />
-          ))
-        ) : (
-          <p className="px-4 py-12 text-center text-sm text-seed-gray-400">
-            아직 게시글이 없어요
-          </p>
-        )}
-      </section>
+      {detailTab === "posts" ? (
+        <>
+          <section className="px-4 pt-4">
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              <button
+                type="button"
+                onClick={() => setBoardFilter("all")}
+                className={`shrink-0 rounded-full px-4 py-1.5 text-sm ${
+                  boardFilter === "all"
+                    ? "bg-seed-gray-900 text-white"
+                    : "border border-seed-gray-200 text-seed-gray-600"
+                }`}
+              >
+                전체 {detail.post_count || total}
+              </button>
+              <button
+                type="button"
+                onClick={() => setBoardFilter("free")}
+                className={`shrink-0 rounded-full px-4 py-1.5 text-sm ${
+                  boardFilter === "free"
+                    ? "bg-seed-gray-900 text-white"
+                    : "border border-seed-gray-200 text-seed-gray-600"
+                }`}
+              >
+                자유 게시판
+              </button>
+              <button
+                type="button"
+                onClick={() => alert("준비 중")}
+                className="shrink-0 rounded-full border border-seed-gray-200 px-4 py-1.5 text-sm text-seed-gray-600"
+              >
+                + 추가
+              </button>
+            </div>
+            <label className="mt-2 flex items-center gap-2 text-sm text-seed-gray-500">
+              <input type="checkbox" className="rounded-full" disabled />
+              인기순으로 보기
+            </label>
+          </section>
 
-      <button
-        type="button"
-        onClick={() => setSheetOpen(true)}
-        className="fixed bottom-6 right-4 z-20 flex items-center gap-2 rounded-full bg-seed-carrot-500 px-5 py-3 text-white shadow-lg"
-      >
-        <Pencil size={18} aria-hidden />
-        <span className="font-bold">글쓰기</span>
-      </button>
+          <section>
+            {posts.length > 0 ? (
+              posts.map((post) => (
+                <MeetingPostCard
+                  key={post.id}
+                  post={post}
+                  meetingId={routeMeetingId}
+                />
+              ))
+            ) : (
+              <p className="px-4 py-12 text-center text-sm text-seed-gray-400">
+                아직 게시글이 없어요
+              </p>
+            )}
+          </section>
+        </>
+      ) : (
+        <section className="min-h-[120px] px-4 py-4">
+          {scheduleLoading ? (
+            <p className="py-8 text-center text-sm text-seed-gray-500">
+              불러오는 중...
+            </p>
+          ) : (
+            <div className="space-y-6">
+              <div>
+                <h3 className="mb-3 text-sm font-bold text-seed-gray-900">
+                  다가올 일정
+                </h3>
+                {upcomingEvents.length > 0 ? (
+                  <ul className="flex flex-col gap-3">
+                    {upcomingEvents.map((ev) => (
+                      <li key={ev.event_id}>
+                        <MeetingEventCard event={ev} />
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="py-6 text-center text-sm text-seed-gray-400">
+                    예정된 일정이 없어요
+                  </p>
+                )}
+              </div>
+              <div>
+                <h3 className="mb-3 text-sm font-bold text-seed-gray-900">
+                  지난 일정
+                </h3>
+                {pastEvents.length > 0 ? (
+                  <ul className="flex flex-col gap-3">
+                    {pastEvents.map((ev) => (
+                      <li key={ev.event_id}>
+                        <MeetingEventCard event={ev} />
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="py-6 text-center text-sm text-seed-gray-400">
+                    지난 일정이 없어요
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      <div className="pointer-events-none fixed inset-x-0 bottom-6 z-30 flex justify-center">
+        <button
+          type="button"
+          onClick={() => setSheetOpen(true)}
+          className="pointer-events-auto flex items-center gap-2 rounded-full bg-seed-carrot-500 px-5 py-3 text-white shadow-lg"
+        >
+          <Pencil size={18} aria-hidden />
+          <span className="font-bold">글쓰기</span>
+        </button>
+      </div>
 
       <PostActionSheet
         open={sheetOpen}
