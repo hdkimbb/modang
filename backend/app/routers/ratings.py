@@ -18,7 +18,7 @@ from app.schemas.rating import (
     RatingResponse,
 )
 from app.services.id import generate_id
-from app.services.pending_ratings import _event_ended_threshold_utc
+from app.services.rating_eligibility import is_event_ended_for_rating
 
 router = APIRouter(prefix="/api/v1/events", tags=["ratings"])
 
@@ -58,11 +58,7 @@ def create_event_rating(
             "event_not_found",
             "일정을 찾을 수 없어요.",
         )
-    scheduled = event.scheduled_at
-    if scheduled.tzinfo is None:
-        scheduled = scheduled.replace(tzinfo=timezone.utc)
-    ended_by_time = scheduled < _event_ended_threshold_utc()
-    if event.status != "ended" and not ended_by_time:
+    if not is_event_ended_for_rating(event):
         raise _error(
             status.HTTP_400_BAD_REQUEST,
             "event_not_ended",

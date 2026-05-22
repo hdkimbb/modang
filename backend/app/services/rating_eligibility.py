@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -10,7 +10,22 @@ from sqlalchemy.orm import Session
 from app.models.meeting_event import MeetingEvent
 from app.models.meeting_member import MeetingMember
 from app.models.meeting_rating import MeetingRating
-from app.services.pending_ratings import _event_ended_threshold_utc, _window_start_utc
+
+KST = timezone(timedelta(hours=9))
+
+
+def _now_kst() -> datetime:
+    return datetime.now(timezone.utc).astimezone(KST)
+
+
+def event_ended_threshold_utc() -> datetime:
+    """scheduled_at before this (UTC) can be rated (KST now)."""
+    return _now_kst().astimezone(timezone.utc)
+
+
+def rating_window_start_utc() -> datetime:
+    """Only events after this (UTC) are in the 7-day window (KST now - 7d)."""
+    return (_now_kst() - timedelta(days=7)).astimezone(timezone.utc)
 
 
 def _ensure_utc(dt: datetime) -> datetime:
@@ -23,12 +38,12 @@ def is_event_ended_for_rating(event: MeetingEvent) -> bool:
     scheduled = _ensure_utc(event.scheduled_at)
     if event.status == "ended":
         return True
-    return scheduled < _event_ended_threshold_utc()
+    return scheduled < event_ended_threshold_utc()
 
 
 def is_within_rating_window(event: MeetingEvent) -> bool:
     scheduled = _ensure_utc(event.scheduled_at)
-    return scheduled > _window_start_utc()
+    return scheduled > rating_window_start_utc()
 
 
 def user_is_meeting_member(db: Session, meeting_id: str, user_id: str) -> bool:

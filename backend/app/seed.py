@@ -335,9 +335,11 @@ PENDING_RATING_EVENTS = [
     },
 ]
 
+PENDING_RATING_RECENT_EVENT_ID = "evt_rating_recent"
+
 PENDING_RATING_EVENT_IDS = frozenset(
     row["id"] for row in PENDING_RATING_EVENTS
-)
+) | {PENDING_RATING_RECENT_EVENT_ID}
 
 SEASONS = [
     {
@@ -718,7 +720,19 @@ def seed_pending_rating_events(session) -> int:
                 status="ended",
             ),
         )
-    return len(PENDING_RATING_EVENTS)
+    recent_at = datetime.now(timezone.utc) - timedelta(minutes=5)
+    session.add(
+        MeetingEvent(
+            id=PENDING_RATING_RECENT_EVENT_ID,
+            meeting_id=MEETING_RATING_DEMO["id"],
+            place_id="plc_006",
+            title="방금 시작한 모임 (시연용)",
+            scheduled_at=recent_at,
+            attendee_count=4,
+            status="ended",
+        ),
+    )
+    return len(PENDING_RATING_EVENTS) + 1
 
 
 def seed_meeting_post_comments(session) -> int:

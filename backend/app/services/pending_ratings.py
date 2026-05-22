@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import timezone
 
 from sqlalchemy import exists, select
 from sqlalchemy.orm import Session
@@ -13,31 +13,15 @@ from app.models.meeting_member import MeetingMember
 from app.models.meeting_rating import MeetingRating
 from app.models.place import Place
 from app.schemas.pending_rating import PendingRatingItem
-
-KST = timezone(timedelta(hours=9))
-EVENT_DURATION_HOURS = 2
-
-
-def _now_kst() -> datetime:
-    return datetime.now(timezone.utc).astimezone(KST)
-
-
-def _event_ended_threshold_utc() -> datetime:
-    """scheduled_at before this (UTC) counts as ended (KST now - 2h)."""
-    return (_now_kst() - timedelta(hours=EVENT_DURATION_HOURS)).astimezone(
-        timezone.utc,
-    )
-
-
-def _window_start_utc() -> datetime:
-    """Only events after this (UTC) are in the 7-day window (KST now - 7d)."""
-    return (_now_kst() - timedelta(days=7)).astimezone(timezone.utc)
+from app.services.rating_eligibility import (
+    event_ended_threshold_utc,
+    rating_window_start_utc,
+)
 
 
 def fetch_pending_ratings(db: Session, user_id: str) -> list[PendingRatingItem]:
-    ended_before = _event_ended_threshold_utc()
-    window_start = _window_start_utc()
-    duration = timedelta(hours=EVENT_DURATION_HOURS)
+    ended_before = event_ended_threshold_utc()
+    window_start = rating_window_start_utc()
 
     already_rated = exists(
         select(MeetingRating.id).where(
@@ -65,7 +49,6 @@ def fetch_pending_ratings(db: Session, user_id: str) -> list[PendingRatingItem]:
         scheduled = event.scheduled_at
         if scheduled.tzinfo is None:
             scheduled = scheduled.replace(tzinfo=timezone.utc)
-        ended_at = scheduled + duration
         items.append(
             PendingRatingItem(
                 event_id=event.id,
@@ -76,7 +59,7 @@ def fetch_pending_ratings(db: Session, user_id: str) -> list[PendingRatingItem]:
                 place_name=place.name,
                 place_category=place.category,
                 scheduled_at=scheduled,
-                ended_at_calculated=ended_at,
+                ended_at_calculated=scheduled,
             ),
         )
     return items
