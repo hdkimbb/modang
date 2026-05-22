@@ -34,6 +34,7 @@ export function PostDetailScreen({
   const { userId } = usePersona();
 
   const [meetingName, setMeetingName] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
   const [post, setPost] = useState<MeetingPostItemApi | null>(null);
   const [comments, setComments] = useState<MeetingPostCommentApi[]>([]);
   const [prevPost, setPrevPost] = useState<MeetingPostItemApi | null>(null);
@@ -49,6 +50,7 @@ export function PostDetailScreen({
         getMeetingPosts(apiMeetingId, { limit: 50 }),
       ]);
       setMeetingName(detail.name);
+      setNeighborhood(detail.neighborhood);
       setPost(postData);
       setComments(commentsData.items);
 
@@ -171,7 +173,11 @@ export function PostDetailScreen({
       ) : null}
 
       <div className="fixed bottom-0 left-0 right-0 z-10 mx-auto max-w-md">
-        <CommentInput onSubmit={handleCommentSubmit} />
+        <CommentInput
+          onSubmit={handleCommentSubmit}
+          neighborhood={neighborhood || undefined}
+          meetingId={apiMeetingId}
+        />
       </div>
     </div>
   );

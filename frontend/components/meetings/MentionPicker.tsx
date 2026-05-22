@@ -11,9 +11,18 @@ interface MentionPickerProps {
   /** null = hidden; empty string = show popular results */
   query: string | null;
   onSelect: (item: MentionSelection) => void;
+  /** 모임 동네 — 장소 검색 시 district 우선 정렬 */
+  neighborhood?: string;
+  /** 모임 ID — 사용자 검색을 멤버로 한정 */
+  meetingId?: string;
 }
 
-export function MentionPicker({ query, onSelect }: MentionPickerProps) {
+export function MentionPicker({
+  query,
+  onSelect,
+  neighborhood,
+  meetingId,
+}: MentionPickerProps) {
   const [places, setPlaces] = useState<PlaceQuickSearchItemApi[]>([]);
   const [users, setUsers] = useState<UserSearchItemApi[]>([]);
   const [loading, setLoading] = useState(false);
@@ -44,7 +53,10 @@ export function MentionPicker({ query, onSelect }: MentionPickerProps) {
 
     setLoading(true);
     const timer = setTimeout(() => {
-      void Promise.all([quickSearchPlaces(query), searchUsers(query)])
+      void Promise.all([
+        quickSearchPlaces(query, { neighborhood }),
+        searchUsers(query, { meetingId }),
+      ])
         .then(([placeData, userData]) => {
           setPlaces(placeData.items);
           setUsers(userData.items);
@@ -58,7 +70,7 @@ export function MentionPicker({ query, onSelect }: MentionPickerProps) {
     }, 200);
 
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, neighborhood, meetingId]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

@@ -20,12 +20,19 @@ interface CommentInputProps {
     mention_user_ids: string[];
   }) => Promise<void>;
   disabled?: boolean;
+  neighborhood?: string;
+  meetingId?: string;
 }
 
 type PlaceMention = { place_id: string; name: string };
 type UserMention = { user_id: string; name: string };
 
-export function CommentInput({ onSubmit, disabled }: CommentInputProps) {
+export function CommentInput({
+  onSubmit,
+  disabled,
+  neighborhood,
+  meetingId,
+}: CommentInputProps) {
   const { persona } = usePersona();
   const inputRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState("");
@@ -113,7 +120,12 @@ export function CommentInput({ onSubmit, disabled }: CommentInputProps) {
 
   return (
     <div className="relative border-t border-gray-100 bg-white px-3 py-2">
-      <MentionPicker query={pickerQuery} onSelect={handleSelectMention} />
+      <MentionPicker
+        query={pickerQuery}
+        onSelect={handleSelectMention}
+        neighborhood={neighborhood}
+        meetingId={meetingId}
+      />
       <div className="flex items-center gap-2">
         <button
           type="button"

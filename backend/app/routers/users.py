@@ -5,6 +5,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.models.meeting_member import MeetingMember
 from app.models.user import User
 from app.schemas.user import (
     UserPersonaListResponse,
@@ -39,9 +40,19 @@ def list_personas(db: Session = Depends(get_db)) -> UserPersonaListResponse:
 def search_users(
     q: str = Query(default="", max_length=100),
     limit: int = Query(default=5, ge=1, le=10),
+    meeting_id: str | None = Query(
+        default=None,
+        max_length=32,
+        description="지정 시 해당 모임 멤버만 검색",
+    ),
     db: Session = Depends(get_db),
 ) -> UserSearchResponse:
-    stmt = select(User).order_by(User.name.asc())
+    stmt = select(User)
+    if meeting_id and meeting_id.strip():
+        stmt = stmt.join(MeetingMember, MeetingMember.user_id == User.id).where(
+            MeetingMember.meeting_id == meeting_id.strip(),
+        )
+    stmt = stmt.order_by(User.name.asc())
     term = q.strip()
     if term:
         pattern = f"%{term}%"
@@ -49,6 +60,7 @@ def search_users(
             or_(
                 User.name.like(pattern),
                 User.region.like(pattern),
+                User.id.like(pattern),
             ),
         )
     users = db.scalars(stmt.limit(limit)).all()

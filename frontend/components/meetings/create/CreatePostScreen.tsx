@@ -239,6 +239,8 @@ export function CreatePostScreen({ routeMeetingId }: CreatePostScreenProps) {
         <MentionPicker
           query={mentionAnchor !== null ? (mentionQuery ?? "") : null}
           onSelect={handleSelectMention}
+          neighborhood={neighborhood || undefined}
+          meetingId={apiMeetingId}
         />
         <textarea
           ref={textareaRef}

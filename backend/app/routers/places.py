@@ -18,6 +18,7 @@ from app.models.meeting import Meeting
 from app.models.meeting_event import MeetingEvent
 from app.models.meeting_rating import MeetingRating
 from app.models.place import Place
+from app.models.place_signal import PlaceSignal
 from app.models.place_recommendation_target import PlaceRecommendationTarget
 from app.schemas.place import (
     PlaceDetailResponse,
@@ -45,6 +46,11 @@ DISTRICT_PATTERN = re.compile(r"([가-힣]+동)")
 def quick_search_places(
     q: str = Query(default="", max_length=100),
     limit: int = Query(default=5, ge=1, le=10),
+    neighborhood: str | None = Query(
+        default=None,
+        max_length=50,
+        description="모임 동네(성수동 등). 지정 시 해당 district 우선 정렬",
+    ),
     db: Session = Depends(get_db),
 ) -> PlaceQuickSearchResponse:
     """Lightweight place name search for @ mention autocomplete."""
@@ -58,6 +64,18 @@ def quick_search_places(
         ).all()
     }
 
+    mention_counts = {
+        pid: int(cnt)
+        for pid, cnt in db.execute(
+            select(PlaceSignal.place_id, func.count(PlaceSignal.id))
+            .where(
+                PlaceSignal.is_void.is_(False),
+                PlaceSignal.signal_type == "mentioned",
+            )
+            .group_by(PlaceSignal.place_id),
+        ).all()
+    }
+
     stmt = select(Place)
     term = q.strip()
     if term:
@@ -65,10 +83,21 @@ def quick_search_places(
         stmt = stmt.where(Place.name.like(pattern))
 
     places = db.scalars(stmt).all()
-    places.sort(
-        key=lambda p: (meeting_counts.get(p.id, 0), p.name),
-        reverse=True,
-    )
+    district_pref = neighborhood.strip() if neighborhood else None
+
+    if district_pref:
+        places.sort(
+            key=lambda p: (
+                0 if p.district == district_pref else 1,
+                -(mention_counts.get(p.id, 0)),
+                p.name,
+            ),
+        )
+    else:
+        places.sort(
+            key=lambda p: (meeting_counts.get(p.id, 0), p.name),
+            reverse=True,
+        )
     top = places[:limit]
 
     items = [

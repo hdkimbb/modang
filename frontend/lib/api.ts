@@ -253,19 +253,29 @@ export async function createPostComment(
 
 export async function quickSearchPlaces(
   q: string,
-  limit = 5,
+  options?: { limit?: number; neighborhood?: string },
 ): Promise<PlaceQuickSearchApi> {
-  const params = new URLSearchParams({ limit: String(limit) });
+  const params = new URLSearchParams({
+    limit: String(options?.limit ?? 5),
+  });
   if (q.trim()) params.set("q", q.trim());
+  if (options?.neighborhood?.trim()) {
+    params.set("neighborhood", options.neighborhood.trim());
+  }
   return fetchApi(`/api/v1/places/quick-search?${params.toString()}`);
 }
 
 export async function searchUsers(
   q: string,
-  limit = 5,
+  options?: { limit?: number; meetingId?: string },
 ): Promise<UserSearchApi> {
-  const params = new URLSearchParams({ limit: String(limit) });
+  const params = new URLSearchParams({
+    limit: String(options?.limit ?? 5),
+  });
   if (q.trim()) params.set("q", q.trim());
+  if (options?.meetingId?.trim()) {
+    params.set("meeting_id", options.meetingId.trim());
+  }
   return fetchApi(`/api/v1/users/search?${params.toString()}`);
 }
 
