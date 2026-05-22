@@ -51,6 +51,12 @@ export function HomeTab({
         <OwnerRankingCard ranking={data.ranking} />
       </section>
 
+      <div
+        className="-mx-4 h-2 shrink-0 bg-seed-gray-100"
+        role="separator"
+        aria-hidden
+      />
+
       <section className="grid grid-cols-3 gap-3 px-4 pb-2 pt-3">
         {filterChips.map((chip) => {
           const active = meetingFilter === chip.id;

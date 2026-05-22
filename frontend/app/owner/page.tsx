@@ -269,6 +269,7 @@ function OwnerDashboardContent() {
           variant="main"
           title={`${persona.name} 대시보드`}
           showExpandMore
+          titleExpanded={personaMenuOpen}
           onTitleClick={() => setPersonaMenuOpen((v) => !v)}
           divider
           rightItems={[
@@ -288,7 +289,7 @@ function OwnerDashboardContent() {
           onOpenChange={setPersonaMenuOpen}
         />
       </div>
-      <div className="shrink-0 px-4 pb-2">
+      <div className="shrink-0 px-4 pb-4">
         <p className="text-sm font-medium text-seed-gray-900">{data.place.name}</p>
         <p className="mt-0.5 text-xs text-seed-gray-500">{data.place.address}</p>
       </div>

@@ -42,8 +42,8 @@ export function PersonaHeaderMenu({ open, onOpenChange }: PersonaHeaderMenuProps
       if (panelRef.current?.contains(e.target as Node)) return;
       onOpenChange(false);
     };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    document.addEventListener("click", onDoc);
+    return () => document.removeEventListener("click", onDoc);
   }, [open, onOpenChange]);
 
   if (!open) return null;

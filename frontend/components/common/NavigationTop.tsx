@@ -13,6 +13,7 @@ export interface NavigationTopProps {
   rightItems?: ReactNode[];
   onBack?: () => void;
   onTitleClick?: () => void;
+  titleExpanded?: boolean;
   divider?: boolean;
   showExpandMore?: boolean;
   className?: string;
@@ -69,6 +70,7 @@ export function NavigationTop({
   rightItems = [],
   onBack,
   onTitleClick,
+  titleExpanded,
   divider = false,
   showExpandMore = false,
   className = "",
@@ -91,10 +93,14 @@ export function NavigationTop({
       onTitleClick || showExpandMore ? (
         <button
           type="button"
-          onClick={onTitleClick}
+          onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onTitleClick?.();
+          }}
           className="flex max-w-full items-center gap-1 text-left"
           aria-label={onTitleClick ? `${title}, 사용자 전환` : title}
-          aria-expanded={showExpandMore && onTitleClick ? undefined : undefined}
+          aria-expanded={titleExpanded}
         >
           <TitleText>{title}</TitleText>
           {showExpandMore ? (

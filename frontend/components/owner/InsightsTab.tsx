@@ -24,6 +24,8 @@ export function InsightsTab({
 }: InsightsTabProps) {
   return (
     <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 pb-6">
+      <OwnerMentionCard stats={mentionStats} />
+
       <section className="rounded-2xl border border-gray-200 bg-white p-4">
         <div className="flex items-center gap-2">
           <Lightbulb className="h-5 w-5 text-orange-500" strokeWidth={1.75} />
@@ -131,8 +133,6 @@ export function InsightsTab({
           </>
         )}
       </section>
-
-      <OwnerMentionCard stats={mentionStats} />
     </div>
   );
 }
