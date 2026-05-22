@@ -25,7 +25,6 @@ import {
   getMeetingEvents,
   getMeetingPosts,
 } from "@/lib/api";
-import { notifyRatingSubmitted } from "@/lib/rating-sync";
 import { resolveApiMeetingId } from "@/lib/resolve-meeting-id";
 import { DEFAULT_MEETING_THUMBNAIL } from "@/lib/types/meeting-list";
 import type {
@@ -115,7 +114,6 @@ export function MeetingDetailScreen({ routeMeetingId }: MeetingDetailScreenProps
       ),
     );
     setRatingEvent(null);
-    notifyRatingSubmitted(eventId);
   }, []);
 
   const { upcomingEvents, pastEvents } = useMemo(() => {
