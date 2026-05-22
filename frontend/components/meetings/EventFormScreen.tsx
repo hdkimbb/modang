@@ -2,9 +2,9 @@
 
 import { Divider, ListRoot } from "@seed-design/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { ScreenHeader } from "@/components/layout/ScreenHeader";
+import { NavigationTop } from "@/components/common/NavigationTop";
 import { useEventDraft } from "@/context/EventDraftContext";
 import { createMeetingEvent, getMeetings, getPlaceDetail } from "@/lib/api";
 import { mapPlaceDetailToPlace } from "@/lib/types/place";
@@ -35,6 +35,13 @@ export function EventFormScreen({
   const { setPlace, setMeetingCategory } = draft;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const canSubmit = useMemo(
+    () => draft.title.trim().length > 0 && Boolean(draft.place?.placeId),
+    [draft.title, draft.place?.placeId],
+  );
+
+  const largeTitle = draft.title.trim() || "일정 만들기";
+
   useEffect(() => {
     const placeId = searchParams.get("place_id");
     if (!placeId) return;
@@ -52,27 +59,22 @@ export function EventFormScreen({
       .catch(() => setMeetingCategory(null));
   }, [apiMeetingId, setMeetingCategory]);
 
-  const handleNext = async () => {
+  const handleSubmit = async () => {
+    if (!canSubmit || isSubmitting) return;
+
     const title = draft.title.trim();
-    if (!title) {
-      alert("모임 제목을 입력해 주세요.");
-      return;
-    }
-    if (!draft.place?.placeId) {
-      alert("등록된 장소를 선택해 주세요. (검색 결과에서 DB에 있는 장소를 골라주세요)");
-      return;
-    }
+    const placeId = draft.place?.placeId;
+    if (!placeId) return;
 
     setIsSubmitting(true);
     try {
-      const result = await createMeetingEvent(apiMeetingId, {
+      await createMeetingEvent(apiMeetingId, {
         title,
         scheduled_at: draftDateTimeToIso(draft.date, draft.time),
         attendee_count: draft.capacity,
-        place_id: draft.place.placeId,
+        place_id: placeId,
       });
-      console.log("event_id:", result.event_id, "signal_id:", result.signal_id);
-      alert("일정이 등록됐어요! 🎉");
+      router.push(`/meetings/${meetingId}`);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "일정 등록에 실패했어요";
@@ -91,24 +93,15 @@ export function EventFormScreen({
     draft.formats.length > 0 ? draft.formats.join(", ") : "선택 안 함";
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <ScreenHeader
-        variant="close"
-        onAction={() => router.back()}
+    <div className="flex min-h-dvh flex-col bg-seed-gray-00 pb-28">
+      <NavigationTop
+        variant="large"
+        largeTitle={largeTitle}
+        onBack={() => router.back()}
+        divider
+        className="sticky top-0 z-10 shrink-0"
       />
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <h2
-          style={{
-            padding:
-              "var(--seed-dimension-x2) var(--seed-dimension-spacing-x-global-gutter) var(--seed-dimension-x4)",
-            fontSize: "var(--seed-font-size-t8)",
-            lineHeight: "var(--seed-line-height-t8)",
-            fontWeight: "var(--seed-font-weight-bold)",
-            color: "var(--seed-color-fg-neutral)",
-          }}
-        >
-          {draft.title}
-        </h2>
         <ListRoot>
           <FormListRow
             icon="📅"
@@ -169,9 +162,10 @@ export function EventFormScreen({
         </ListRoot>
       </div>
       <BottomFixedButton
-        label={isSubmitting ? "등록 중..." : "다음"}
-        onClick={() => void handleNext()}
-        disabled={isSubmitting}
+        label={isSubmitting ? "등록 중..." : "일정 등록"}
+        onClick={() => void handleSubmit()}
+        disabled={!canSubmit}
+        loading={isSubmitting}
       />
     </div>
   );

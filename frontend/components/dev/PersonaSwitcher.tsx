@@ -11,6 +11,10 @@ export function PersonaSwitcher() {
 
   if (!ready) return null;
 
+  if (pathname === "/owner" || pathname.startsWith("/owner/")) {
+    return null;
+  }
+
   const roleLabel = isOwner ? "사장" : "일반";
 
   return (

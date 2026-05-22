@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowLeft, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { NavigationTop } from "@/components/common/NavigationTop";
 import { CommentInput } from "@/components/meetings/CommentInput";
 import { CommentList } from "@/components/meetings/CommentList";
 import { usePersona } from "@/context/PersonaContext";
@@ -120,22 +121,23 @@ export function PostDetailScreen({
 
   return (
     <div className="flex min-h-dvh w-full flex-col bg-white pb-20">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3">
-        <button
-          type="button"
-          aria-label="뒤로"
-          onClick={() => router.back()}
-          className="p-1"
-        >
-          <ArrowLeft size={24} />
-        </button>
-        <h1 className="truncate px-2 text-center text-sm font-bold text-gray-900">
-          {meetingName}
-        </h1>
-        <button type="button" aria-label="메뉴" className="p-1 text-gray-700">
-          <Menu size={24} />
-        </button>
-      </header>
+      <NavigationTop
+        variant="sub"
+        title={meetingName}
+        onBack={() => router.back()}
+        divider
+        className="sticky top-0 z-10"
+        rightItems={[
+          <button
+            key="menu"
+            type="button"
+            aria-label="메뉴"
+            className="text-seed-gray-900"
+          >
+            <Menu size={24} strokeWidth={2} />
+          </button>,
+        ]}
+      />
 
       <div className="border-b border-gray-100 bg-blue-50 px-4 py-3 text-sm text-gray-700">
         모임 상단에 사진을 노출하려면, 사진이 포함된 게시글을 작성해보세요.

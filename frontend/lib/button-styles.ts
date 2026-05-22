@@ -1,5 +1,5 @@
 /**
- * Disabled filled buttons — background #D1D5D9 (tailwind: gray-disabled).
+ * Disabled filled buttons — background #D1D3D8 (tailwind: gray-disabled / seed-gray-400).
  * Use on native <button> with disabled prop or conditional classes.
  */
 

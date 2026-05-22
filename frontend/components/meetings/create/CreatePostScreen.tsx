@@ -1,5 +1,6 @@
 "use client";
 
+import { NavigationTop } from "@/components/common/NavigationTop";
 import { BTN_TEXT_DISABLED } from "@/lib/button-styles";
 
 import {
@@ -196,7 +197,7 @@ export function CreatePostScreen({ routeMeetingId }: CreatePostScreenProps) {
   };
 
   return (
-    <div className="relative flex min-h-dvh w-full flex-col bg-white">
+    <div className="relative flex min-h-dvh w-full flex-col bg-white pb-16">
       <input
         ref={fileInputRef}
         type="file"
@@ -209,30 +210,31 @@ export function CreatePostScreen({ routeMeetingId }: CreatePostScreenProps) {
         }}
       />
 
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3">
-        <button
-          type="button"
-          aria-label="닫기"
-          onClick={() => router.back()}
-          className="p-1"
-        >
-          <X size={24} />
-        </button>
-        <div className="text-center">
-          <p className="font-bold text-gray-900">글쓰기</p>
-          <p className="text-xs text-gray-500">{meetingName}</p>
-        </div>
-        <button
-          type="button"
-          disabled={!canSubmit}
-          onClick={() => void handleSubmit()}
-          className={`text-sm font-bold ${
-            canSubmit ? "text-gray-900" : BTN_TEXT_DISABLED
-          }`}
-        >
-          완료
-        </button>
-      </header>
+      <NavigationTop
+        variant="large"
+        largeTitle="글쓰기"
+        divider
+        className="sticky top-0 z-10 shrink-0"
+        onBack={() => router.back()}
+        rightItems={[
+          <button
+            key="done"
+            type="button"
+            disabled={!canSubmit}
+            onClick={() => void handleSubmit()}
+            className={`text-sm font-bold ${
+              canSubmit ? "text-seed-gray-900" : BTN_TEXT_DISABLED
+            }`}
+          >
+            완료
+          </button>,
+        ]}
+      />
+      {meetingName ? (
+        <p className="border-b border-seed-gray-100 px-4 pb-2 text-sm text-seed-gray-500">
+          {meetingName}
+        </p>
+      ) : null}
 
       <button
         type="button"
@@ -302,7 +304,7 @@ export function CreatePostScreen({ routeMeetingId }: CreatePostScreenProps) {
         🌐 {neighborhood || "동네"} 근처 이웃들이 볼 수 있어요
       </p>
 
-      <footer className="sticky bottom-0 mt-auto flex items-center gap-4 border-t border-gray-100 bg-white px-4 py-3">
+      <footer className="fixed bottom-0 left-0 right-0 z-30 mx-auto mt-auto flex max-w-md items-center gap-4 border-t border-seed-gray-200 bg-seed-gray-00 px-4 py-3">
         <button type="button" onClick={() => setAttachOpen(true)} aria-label="첨부">
           <Plus size={24} className="text-gray-700" />
         </button>

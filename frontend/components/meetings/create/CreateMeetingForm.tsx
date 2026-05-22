@@ -1,14 +1,11 @@
 "use client";
 
-import {
-  BTN_FILLED_PRIMARY_DISABLED,
-  BTN_FILLED_PRIMARY_ENABLED,
-} from "@/lib/button-styles";
-
-import { ChevronDown, Search, X } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { NavigationTop } from "@/components/common/NavigationTop";
+import { BottomFixedButton } from "@/components/meetings/BottomFixedButton";
 import { usePersona } from "@/context/PersonaContext";
 import { createMeeting } from "@/lib/api";
 import {
@@ -93,22 +90,15 @@ export function CreateMeetingForm() {
           전환해 주세요.
         </p>
       ) : null}
-      <div className="shrink-0 px-4 pt-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="inline-flex p-1 text-gray-900"
-          aria-label="닫기"
-        >
-          <X size={24} strokeWidth={2} />
-        </button>
-      </div>
+      <NavigationTop
+        variant="large"
+        largeTitle="어떤 모임을 만들까요?"
+        onBack={() => router.back()}
+        divider
+        className="sticky top-0 z-10 shrink-0"
+      />
 
       <div className="flex-1 space-y-8 px-4 pb-6 pt-2">
-        <h1 className="text-2xl font-bold text-gray-900">
-          어떤 모임을 만들까요?
-        </h1>
-
         <section className="space-y-2">
           <label className="text-base font-bold text-gray-900" htmlFor="name">
             모임명
@@ -228,20 +218,12 @@ export function CreateMeetingForm() {
         </section>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-30 mx-auto max-w-md">
-        <button
-          type="button"
-          disabled={!canSubmit || submitting}
-          onClick={() => void handleSubmit()}
-          className={`w-full py-4 text-base font-bold transition-colors ${
-            canSubmit && !submitting
-              ? `${BTN_FILLED_PRIMARY_ENABLED} hover:bg-orange-600`
-              : BTN_FILLED_PRIMARY_DISABLED
-          }`}
-        >
-          {submitting ? "만드는 중…" : "모임 만들기"}
-        </button>
-      </div>
+      <BottomFixedButton
+        label={submitting ? "만드는 중…" : "모임 만들기"}
+        onClick={() => void handleSubmit()}
+        disabled={!canSubmit}
+        loading={submitting}
+      />
     </div>
   );
 }

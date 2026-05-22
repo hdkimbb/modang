@@ -65,8 +65,9 @@ export function RankingScreen() {
     <div className="flex min-h-0 flex-1 flex-col">
       <ScreenHeader
         variant="back"
-        title="우리동네 랭킹"
+        title="랭킹"
         onAction={() => router.back()}
+        divider
         rightSlot={
           <Link
             href="/awards"

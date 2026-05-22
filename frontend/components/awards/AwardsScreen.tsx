@@ -85,6 +85,7 @@ export function AwardsScreen() {
         variant="back"
         title="어워드"
         onAction={() => router.back()}
+        divider
       />
 
       {seasons.length > 0 ? (

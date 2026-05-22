@@ -32,7 +32,7 @@ body {
 /* SEED ActionButton — unified disabled fill */
 .modang-action-btn:disabled,
 .modang-action-btn[data-disabled="true"] {
-  background-color: #d1d5d9 !important;
+  background-color: #d1d3d8 !important;
   color: #ffffff !important;
   opacity: 1 !important;
   cursor: not-allowed;

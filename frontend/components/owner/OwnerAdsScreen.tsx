@@ -55,6 +55,7 @@ export function OwnerAdsScreen() {
           variant="back"
           title="광고센터"
           onAction={() => router.push("/owner")}
+          divider
         />
         <p className="px-4 py-24 text-center text-sm text-gray-600">
           광고센터는 사장 계정 전용이에요.
@@ -75,6 +76,7 @@ export function OwnerAdsScreen() {
         variant="back"
         title="광고센터"
         onAction={() => router.back()}
+        divider
       />
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 pb-8">

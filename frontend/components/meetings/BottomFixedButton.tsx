@@ -5,38 +5,40 @@ import { ActionButton } from "@seed-design/react";
 interface BottomFixedButtonProps {
   label: string;
   onClick: () => void;
-  variant?: "neutralSolid" | "brandSolid";
   disabled?: boolean;
+  loading?: boolean;
 }
 
+/**
+ * 폼 하단 고정 CTA — 활성: brandSolid(캐럿), 비활성: gray-disabled (#D1D3D8)
+ */
 export function BottomFixedButton({
   label,
   onClick,
-  variant = "neutralSolid",
   disabled = false,
+  loading = false,
 }: BottomFixedButtonProps) {
+  const isDisabled = disabled || loading;
+
   return (
     <div
-      className="shrink-0"
+      className="fixed bottom-0 left-0 right-0 z-30 mx-auto max-w-md border-t border-seed-gray-200 bg-seed-gray-00"
       style={{
-        padding:
-          "var(--seed-dimension-x4) var(--seed-dimension-spacing-x-global-gutter)",
-        paddingBottom:
-          "calc(var(--seed-dimension-x4) + var(--seed-safe-area-bottom))",
-        background: "var(--seed-color-bg-layer-default)",
-        borderTop: "1px solid var(--seed-color-stroke-neutral-subtle)",
+        paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))",
       }}
     >
-      <ActionButton
-        className="modang-action-btn"
-        variant={variant}
-        size="large"
-        onClick={onClick}
-        disabled={disabled}
-        style={{ width: "100%" }}
-      >
-        {label}
-      </ActionButton>
+      <div className="px-4 py-4">
+        <ActionButton
+          className="modang-action-btn"
+          variant="brandSolid"
+          size="large"
+          onClick={onClick}
+          disabled={isDisabled}
+          style={{ width: "100%" }}
+        >
+          {label}
+        </ActionButton>
+      </div>
     </div>
   );
 }

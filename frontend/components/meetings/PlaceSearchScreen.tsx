@@ -133,6 +133,7 @@ export function PlaceSearchScreen() {
         variant="back"
         title="장소 검색"
         onAction={() => router.back()}
+        divider
       />
       <PlaceSearchBar value={query} onChange={setQuery} />
 

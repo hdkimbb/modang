@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowLeft, Share2, Star } from "lucide-react";
+import { Share2, Star } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 
+import { NavigationTop } from "@/components/common/NavigationTop";
 import { RatingModal } from "@/components/meetings/RatingModal";
 import {
   getPlaceDetail,
@@ -110,23 +111,22 @@ function PlaceDetailBody({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col pb-28">
-      <header className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="rounded-full p-2 text-gray-700 hover:bg-gray-50"
-          aria-label="뒤로가기"
-        >
-          <ArrowLeft className="h-5 w-5" strokeWidth={1.75} />
-        </button>
-        <button
-          type="button"
-          className="rounded-full p-2 text-gray-500 hover:bg-gray-50"
-          aria-label="공유"
-        >
-          <Share2 className="h-5 w-5" strokeWidth={1.75} />
-        </button>
-      </header>
+      <NavigationTop
+        variant="sub"
+        onBack={() => router.back()}
+        divider
+        rightItems={[
+          <button
+            key="share"
+            type="button"
+            className="text-seed-gray-900"
+            aria-label="공유"
+            onClick={() => alert("공유는 준비 중이에요")}
+          >
+            <Share2 size={24} strokeWidth={2} />
+          </button>,
+        ]}
+      />
 
       <section className="px-4 py-5">
         <h1 className="text-2xl font-bold">{place.name}</h1>

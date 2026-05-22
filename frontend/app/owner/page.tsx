@@ -3,9 +3,11 @@
 import { Bell } from "lucide-react";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 
+import { NavigationTop } from "@/components/common/NavigationTop";
+import { Tabs } from "@/components/common/Tabs";
+import { PersonaHeaderMenu } from "@/components/dev/PersonaHeaderMenu";
 import { HomeTab } from "@/components/owner/HomeTab";
 import { InsightsTab } from "@/components/owner/InsightsTab";
-import { OwnerTabNav } from "@/components/owner/OwnerTabNav";
 import { ToolsTab } from "@/components/owner/ToolsTab";
 import { usePersona } from "@/context/PersonaContext";
 import { filterOwnerMeetings, type OwnerMeetingFilter } from "@/lib/owner-meeting-filter";
@@ -22,6 +24,12 @@ async function parseApiError(res: Response, fallback: string): Promise<string> {
   const err = await res.json().catch(() => ({}));
   return err.detail?.error?.message ?? fallback;
 }
+
+const OWNER_TABS = [
+  { key: "home" as const, label: "홈" },
+  { key: "insights" as const, label: "인사이트" },
+  { key: "tools" as const, label: "도구" },
+];
 
 function OwnerDashboardContent() {
   const { persona, userId, isOwner } = usePersona();
@@ -45,6 +53,7 @@ function OwnerDashboardContent() {
   const [pendingMessageTemplate, setPendingMessageTemplate] = useState<
     string | null
   >(null);
+  const [personaMenuOpen, setPersonaMenuOpen] = useState(false);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -255,23 +264,39 @@ function OwnerDashboardContent() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="shrink-0 border-b border-gray-100 px-4 py-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-xl font-bold">{data.place.name}</h1>
-            <p className="mt-0.5 text-sm text-gray-500">{data.place.address}</p>
-          </div>
-          <button
-            type="button"
-            className="shrink-0 rounded-full p-2 text-gray-600 hover:bg-gray-50"
-            aria-label="알림"
-          >
-            <Bell className="h-5 w-5" strokeWidth={1.75} />
-          </button>
-        </div>
-      </header>
+      <div className="relative shrink-0">
+        <NavigationTop
+          variant="main"
+          title={data.place.name}
+          showExpandMore
+          onTitleClick={() => setPersonaMenuOpen((v) => !v)}
+          divider
+          rightItems={[
+            <button
+              key="bell"
+              type="button"
+              className="text-seed-gray-900"
+              aria-label="알림"
+              onClick={() => alert("알림은 준비 중이에요")}
+            >
+              <Bell size={24} strokeWidth={2} />
+            </button>,
+          ]}
+        />
+        <PersonaHeaderMenu
+          open={personaMenuOpen}
+          onOpenChange={setPersonaMenuOpen}
+        />
+      </div>
+      <p className="shrink-0 px-4 pb-2 text-sm text-seed-gray-500">
+        {data.place.address}
+      </p>
 
-      <OwnerTabNav activeTab={activeTab} onTabChange={setActiveTab} />
+      <Tabs
+        items={OWNER_TABS}
+        activeKey={activeTab}
+        onChange={(key) => setActiveTab(key as OwnerTabId)}
+      />
 
       {activeTab === "home" ? (
         <HomeTab
